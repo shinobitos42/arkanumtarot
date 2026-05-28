@@ -1,24 +1,71 @@
-import React, { useState } from "react";
-import { User, Mail, Calendar, Shield, CreditCard, Lock, ArrowRight } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { User, Mail, Calendar, Shield, Lock, Camera, Check } from "lucide-react";
+import api from "../services/api"; // Importando a instância do Axios configurada
 
 export default function PerfilUsuario() {
   // Puxa os dados reais de quem fez login
   const nomeUsuario = localStorage.getItem('user_name') || 'Usuário';
-  const emailUsuario = localStorage.getItem('user_email') || 'email@exemplo.com'; // O ideal é salvar isso no login futuramente
+  const emailUsuario = localStorage.getItem('user_email') || 'email@exemplo.com'; 
+  const fotoAtual = localStorage.getItem('user_foto'); 
   
   const [dataNascimento, setDataNascimento] = useState("");
+  
+  // Estados para a foto de perfil
+  const [fotoFile, setFotoFile] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(fotoAtual || null);
+  const [loading, setLoading] = useState(false);
+  const [sucesso, setSucesso] = useState(false);
 
-  const handleSalvar = (e) => {
+  const fileInputRef = useRef(null);
+
+  // Função que lida com a escolha do arquivo
+  const handleFotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFotoFile(file);
+      // Cria uma URL temporária para mostrar o preview imediatamente na tela
+      setFotoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSalvar = async (e) => {
     e.preventDefault();
-    console.log("Salvando dados:", { dataNascimento });
-    // Aqui entrará a conexão com o axios futuramente
+    setLoading(true);
+    setSucesso(false);
+
+    // O FormData é obrigatório quando enviamos arquivos (imagens) pro backend
+    const formData = new FormData();
+    if (dataNascimento) formData.append('data_nascimento', dataNascimento);
+    if (fotoFile) formData.append('foto_perfil', fotoFile);
+
+    try {
+      // Ajuste a rota '/users/me/' de acordo com a sua API no Django
+      const response = await api.patch('/users/me/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Se retornou a nova URL da foto, atualiza no localStorage
+      if (response.data.foto_perfil) {
+        localStorage.setItem('user_foto', response.data.foto_perfil);
+      }
+      
+      setSucesso(true);
+      setTimeout(() => setSucesso(false), 3000); // Esconde a mensagem de sucesso após 3s
+    } catch (error) {
+      console.error("Erro ao salvar dados:", error);
+      alert("Houve um erro ao atualizar o perfil.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
         <h2 style={styles.title}>Minha Conta</h2>
-        <p style={styles.subtitle}>Gerencie suas informações pessoais e configurações de acesso.</p>
+        <p style={styles.subtitle}>Gerencie suas informações pessoais, foto e configurações de acesso.</p>
       </div>
 
       <div style={styles.grid}>
@@ -27,6 +74,40 @@ export default function PerfilUsuario() {
           <h3 style={styles.cardTitle}>Dados Pessoais</h3>
           
           <form onSubmit={handleSalvar} style={styles.form}>
+            
+            {/* COMPONENTE DE FOTO DE PERFIL */}
+            <div style={styles.avatarContainer}>
+              <div 
+                style={styles.avatarWrapper} 
+                onClick={() => fileInputRef.current.click()}
+              >
+                {fotoPreview ? (
+                  <img src={fotoPreview} alt="Sua foto de perfil" style={styles.avatarImage} />
+                ) : (
+                  <div style={styles.avatarPlaceholder}>
+                    <User size={40} color="#786C63" />
+                  </div>
+                )}
+                
+                {/* Overlay Escuro com Ícone de Câmera */}
+                <div style={styles.avatarOverlay}>
+                  <Camera size={24} color="#FDFBF7" />
+                </div>
+              </div>
+              <div style={styles.avatarText}>
+                <h4 style={styles.avatarTitle}>Sua Foto de Perfil</h4>
+                <p style={styles.avatarSubtitle}>Clique na imagem para alterar. Use formatos JPG ou PNG.</p>
+              </div>
+              
+              {/* Input oculto que o React aciona pelo useRef */}
+              <input 
+                type="file" 
+                accept="image/png, image/jpeg" 
+                ref={fileInputRef} 
+                onChange={handleFotoChange}
+                style={{ display: 'none' }} 
+              />
+            </div>
             
             {/* NOME (TRAVADO) */}
             <div style={styles.inputGroup}>
@@ -72,16 +153,24 @@ export default function PerfilUsuario() {
               </div>
             </div>
 
-            <button type="submit" style={styles.btnSalvar}>
-              Salvar Alterações
-            </button>
+            <div style={styles.actionRow}>
+              <button type="submit" style={styles.btnSalvar} disabled={loading}>
+                {loading ? "Salvando..." : "Salvar Alterações"}
+              </button>
+              
+              {sucesso && (
+                <span style={styles.sucessoText}>
+                  <Check size={14} /> Perfil atualizado!
+                </span>
+              )}
+            </div>
           </form>
         </div>
 
         {/* COLUNA DIREITA: PLANOS E SEGURANÇA */}
         <div style={styles.columnRight}>
           
-          {/* PLANO ATUAL - SEM DADOS FALSOS */}
+          {/* PLANO ATUAL */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Plano Atual</h3>
             
@@ -125,6 +214,17 @@ const styles = {
   card: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px" },
   cardTitle: { color: "#FDFBF7", fontSize: "18px", fontFamily: "'Playfair Display', serif", marginBottom: "24px" },
   form: { display: "flex", flexDirection: "column", gap: "24px" },
+  
+  // ESTILOS NOVOS DO AVATAR
+  avatarContainer: { display: "flex", alignItems: "center", gap: "20px", paddingBottom: "20px", borderBottom: "1px solid #2A2420" },
+  avatarWrapper: { position: "relative", width: "80px", height: "80px", borderRadius: "50%", cursor: "pointer", overflow: "hidden", border: "2px solid #3A322C", backgroundColor: "#110F0E" },
+  avatarImage: { width: "100%", height: "100%", objectFit: "cover" },
+  avatarPlaceholder: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" },
+  avatarOverlay: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(21, 19, 18, 0.6)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s", '&:hover': { opacity: 1 } },
+  avatarText: { display: "flex", flexDirection: "column", gap: "4px" },
+  avatarTitle: { color: "#FDFBF7", fontSize: "14px", fontWeight: "600" },
+  avatarSubtitle: { color: "#786C63", fontSize: "12px" },
+
   inputGroup: { display: "flex", flexDirection: "column", gap: "8px" },
   label: { color: "#A89C92", fontSize: "12px", fontWeight: "500" },
   inputWrapper: { position: "relative", display: "flex", alignItems: "center" },
@@ -133,7 +233,10 @@ const styles = {
   lockIcon: { position: "absolute", right: "14px" },
   input: { width: "100%", padding: "14px 14px 14px 44px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", transition: "border-color 0.2s" },
   inputDisabled: { width: "100%", padding: "14px 44px", backgroundColor: "transparent", border: "none", color: "#786C63", fontSize: "14px", cursor: "not-allowed" },
-  btnSalvar: { padding: "14px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: "pointer", marginTop: "8px", width: "fit-content" },
+  
+  actionRow: { display: "flex", alignItems: "center", gap: "16px", marginTop: "8px" },
+  btnSalvar: { padding: "14px 24px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: "pointer", transition: "opacity 0.2s" },
+  sucessoText: { display: "flex", alignItems: "center", gap: "4px", color: "#4CAF50", fontSize: "13px", fontWeight: "600" },
   
   planInfo: { marginBottom: "24px", backgroundColor: "#1A1715", padding: "20px", borderRadius: "8px", border: "1px solid #2A2420" },
   planTagBase: { display: "inline-block", backgroundColor: "#2A2420", color: "#A89C92", padding: "4px 12px", borderRadius: "4px", fontSize: "10px", fontWeight: "700", textTransform: "uppercase", marginBottom: "12px" },

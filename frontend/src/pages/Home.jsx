@@ -102,8 +102,8 @@ export default function Home() {
           {/* Coluna 3: Jurídico */}
           <div style={styles.footerColumn}>
             <h5 style={styles.footerColTitle}>JURÍDICO</h5>
-            <a href="#termos" style={styles.footerLink}>Termos de Uso</a>
-            <a href="#privacidade" style={styles.footerLink}>Privacidade</a>
+            <a href="/termos" style={styles.footerLink}>Termos de Uso</a>
+            <a href="/privacidade" style={styles.footerLink}>Privacidade</a>
           </div>
 
           {/* Coluna 4: Suporte */}

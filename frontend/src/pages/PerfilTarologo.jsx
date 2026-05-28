@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check } from "lucide-react";
+import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check, User } from "lucide-react";
 
 export default function PerfilTarologo({ tarologo, onVoltar }) {
   const [dataSelecionada, setDataSelecionada] = useState("");
   const [horaSelecionada, setHoraSelecionada] = useState("");
   const [agendadoComSucesso, setAgendadoComSucesso] = useState(false);
 
-  // Mock de datas e horários disponíveis
   const datasDisponiveis = ["26/05", "27/05", "28/05", "29/05"];
   const horariosDisponiveis = ["09:00", "11:00", "14:00", "16:00", "19:00", "21:00"];
 
@@ -35,7 +34,6 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
 
   return (
     <div style={styles.container}>
-      {/* Botão Voltar */}
       <button onClick={onVoltar} style={styles.btnVoltar}>
         <ChevronLeft size={16} /> Voltar para a lista
       </button>
@@ -44,9 +42,17 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
         {/* COLUNA DA ESQUERDA: INFORMAÇÕES DO GUIA */}
         <div style={styles.colEsquerda}>
           
-          {/* Header do Perfil */}
           <div style={styles.profileHeaderCard}>
-            <img src={tarologo.img} alt={tarologo.nome} style={styles.profileAvatar} />
+            
+            {/* AVATAR COM FALLBACK PARA FOTO DO BACKEND */}
+            {tarologo.foto_perfil || tarologo.img ? (
+               <img src={tarologo.foto_perfil || tarologo.img} alt={tarologo.nome} style={styles.profileAvatar} />
+            ) : (
+               <div style={styles.avatarPlaceholder}>
+                 <User size={40} color="#786C63" />
+               </div>
+            )}
+           
             <div style={styles.profileHeaderInfo}>
               <span style={styles.tagSpec}>{tarologo.especialidade}</span>
               <h1 style={styles.profileName}>{tarologo.nome}</h1>
@@ -59,7 +65,6 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
             </div>
           </div>
 
-          {/* Biografia / Sobre */}
           <div style={styles.sectionCard}>
             <h3 style={styles.sectionTitle}>
               <Award size={18} color="#D4AF37" /> Trajetória e Conexão
@@ -69,7 +74,6 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
             </p>
           </div>
 
-          {/* Avaliações Mockadas */}
           <div style={styles.sectionCard}>
             <h3 style={styles.sectionTitle}>
               <MessageSquare size={18} color="#D4AF37" /> Relatos de Clareza
@@ -94,7 +98,7 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
 
         </div>
 
-        {/* COLUNA DA DIREITA: AGENDAMENTO (STICKY CARD) */}
+        {/* COLUNA DA DIREITA: AGENDAMENTO */}
         <div style={styles.colDireita}>
           <div style={styles.agendamentoCard}>
             <h3 style={styles.agendarTitle}>Reservar Tiragem</h3>
@@ -105,7 +109,6 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
             </div>
 
             <form onSubmit={handleAgendar} style={styles.agendamentoForm}>
-              {/* Seleção de Data */}
               <div style={styles.formGroup}>
                 <label style={styles.inputLabel}>
                   <Calendar size={14} style={{ marginRight: '6px' }} /> Selecione o Dia
@@ -127,10 +130,9 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
                 </div>
               </div>
 
-              {/* Seleção de Horário */}
               <div style={styles.formGroup}>
                 <label style={styles.inputLabel}>
-                  <Clock size={14} style={{ marginRight: '6px' }} /> Horários Disponíveis (Horário de Brasília)
+                  <Clock size={14} style={{ marginRight: '6px' }} /> Horários Disponíveis
                 </label>
                 <div style={styles.selectorGridHoras}>
                   {horariosDisponiveis.map((hora) => (
@@ -149,7 +151,6 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
                 </div>
               </div>
 
-              {/* Botão de Confirmação */}
               <button
                 type="submit"
                 disabled={!dataSelecionada || !horaSelecionada}
@@ -178,10 +179,13 @@ const styles = {
   btnVoltar: { display: "flex", alignItems: "center", gap: "6px", backgroundColor: "transparent", border: "none", color: "#A89C92", fontSize: "13px", cursor: "pointer", alignSelf: "flex-start", padding: 0, transition: "color 0.2s" },
   profileLayout: { display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: "32px", alignItems: "start" },
   
-  // COLUNA ESQUERDA
   colEsquerda: { display: "flex", flexDirection: "column", gap: "24px" },
   profileHeaderCard: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px", display: "flex", gap: "24px", alignItems: "center" },
   profileAvatar: { width: "100px", height: "100px", borderRadius: "12px", objectFit: "cover", border: "1px solid #3A322C" },
+  
+  // ESTILO PARA QUANDO NÃO HÁ FOTO DO TARÓLOGO
+  avatarPlaceholder: { width: "100px", height: "100px", borderRadius: "12px", backgroundColor: "#110F0E", border: "1px solid #3A322C", display: "flex", alignItems: "center", justifyContent: "center" },
+  
   profileHeaderInfo: { display: "flex", flexDirection: "column", gap: "6px" },
   tagSpec: { color: "#D4AF37", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px" },
   profileName: { fontSize: "28px", fontWeight: "normal", color: "#FDFBF7", fontFamily: "'Playfair Display', serif" },
@@ -200,7 +204,6 @@ const styles = {
   reviewStars: { display: "flex", alignItems: "center", gap: "4px", color: "#D4AF37", fontSize: "11px" },
   reviewText: { color: "#786C63", fontSize: "13px", lineHeight: "1.5", fontStyle: "italic" },
 
-  // COLUNA DIREITA (STICKY)
   colDireita: { position: "sticky", top: "24px" },
   agendamentoCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "12px", padding: "32px" },
   agendarTitle: { color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontSize: "20px", marginBottom: "20px", fontWeight: "normal" },
@@ -220,7 +223,6 @@ const styles = {
   btnConfirmarDesativado: { backgroundColor: "#2A2420", color: "#786C63", cursor: "not-allowed" },
   garantiaBox: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#786C63", fontSize: "11px", marginTop: "20px" },
 
-  // SUCESSO
   successCard: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "64px 32px", backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", textAlign: "center", maxWidth: "500px", margin: "40px auto" },
   successIconWrapper: { width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "#D4AF37", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" },
   successTitle: { fontSize: "24px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", marginBottom: "12px", fontWeight: "normal" },
