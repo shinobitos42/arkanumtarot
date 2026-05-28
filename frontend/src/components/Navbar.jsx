@@ -4,7 +4,7 @@ export default function Navbar() {
   return (
     <nav style={styles.nav}>
       <div style={styles.logoBox}>
-        <h3 style={styles.logoText}>Arcanum</h3>
+        <h3 style={styles.logoText}>Arkanum</h3>
       </div>
       
       <div style={styles.linkBox}>

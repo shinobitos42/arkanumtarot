@@ -84,7 +84,7 @@ export default function Home() {
         <div style={styles.footerContainer}>
           
           <div style={styles.footerBrand}>
-            <h3 style={styles.footerLogo}>Arcanum</h3>
+            <h3 style={styles.footerLogo}>Arkanum</h3>
             <p style={styles.footerTagline}>
               Conectando sabedoria milenar e intuição humana para revelar o seu destino.
             </p>
@@ -105,16 +105,16 @@ export default function Home() {
 
           <div style={styles.footerColumn}>
             <h5 style={styles.footerColTitle}>SUPORTE</h5>
-            <a href="mailto:suporte@arcanum.com" style={styles.footerContact}>
+            <a href="mailto:suporte@arkanum.com" style={styles.footerContact}>
               <Mail size={15} style={{ marginRight: '8px', color: '#A89C92' }} />
-              suporte@arcanum.com
+              suporte@Arkanum.com
             </a>
           </div>
 
         </div>
 
         <div style={styles.footerBottom}>
-          <p style={styles.footerText}>© 2026 Arcanum Inc. Todos os direitos reservados.</p>
+          <p style={styles.footerText}>© 2026 Arkanum Inc. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>
