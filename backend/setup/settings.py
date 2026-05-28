@@ -26,6 +26,14 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*'] # Deixando aberto para facilitar o desenvolvimento com o frontend local e nuvem
 
+# --- CONFIGURAÇÕES DE SEGURANÇA (CSRF) ---
+# Libera o login no painel de administrador através dos links da nuvem
+CSRF_TRUSTED_ORIGINS = [
+    'https://arkanumtarot-production.up.railway.app',
+    'https://arkanumtarot.com.br',
+    'https://www.arkanumtarot.com.br',
+]
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
