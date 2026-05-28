@@ -1,0 +1,26 @@
+/* RESET GLOBAL PARA BORDAS BRANCAS CHATAS */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Essencial para alinhar Navbar e preenchimentos corretamente */
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  /* Fundo escuro e quente para evitar piscar branco enquanto o site carrega */
+  background-color: #151312; 
+  /* Garante uma boa tipografia desde o início */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Evita barra de rolagem horizontal indesejada que pode gerar bordas */
+  overflow-x: hidden; 
+}
+
+/* Evita que links fiquem azuis por padrão */
+a {
+  text-decoration: none;
+  color: inherit;
+}

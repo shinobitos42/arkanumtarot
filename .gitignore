@@ -1,0 +1,43 @@
+# ==========================================
+# SEGURANÇA MÁXIMA (NUNCA SUBIR PARA O GIT)
+# ==========================================
+.env
+.env.*
+db.sqlite3
+*.sqlite3
+
+# ==========================================
+# PASTAS GIGANTES DE DEPENDÊNCIAS
+# ==========================================
+# Python (Backend)
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node.js (Frontend e Backend)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ==========================================
+# ARQUIVOS DE USUÁRIOS E PRODUÇÃO
+# ==========================================
+# Uploads de áudio e imagem do Django
+media/
+backend/media/
+
+# Arquivos estáticos coletados para o Render/Railway
+staticfiles/
+backend/staticfiles/
+
+# Build do React (Vite)
+frontend/dist/
+frontend/build/
+
+# ==========================================
+# LIXO DO SISTEMA OPERACIONAL
+# ==========================================
+.DS_Store
+Thumbs.db
