@@ -1,148 +1,231 @@
-import React, { useState } from 'react';
-import { Shield, Star, Zap, Check, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Check, Star, Crown, Shield, Zap, Sparkles, Loader2, ArrowLeft } from "lucide-react";
+import api from "../services/api";
 
 export default function Planos() {
-  // Lê a role do usuário (pode vir do contexto, props ou localStorage)
-  const userRole = localStorage.getItem('user_role') || 'CONSULENTE'; 
-  const [planoAnual, setPlanoAnual] = useState(false);
+  const navigate = useNavigate();
+  const [role, setRole] = useState(localStorage.getItem("user_role") || "CONSULENTE");
+  const [processando, setProcessando] = useState(null);
 
-  // ==========================================
-  // CONTEÚDO PARA CONSULENTES
-  // ==========================================
-  if (userRole === 'CONSULENTE') {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <h2 style={styles.title}>Eleve sua Conexão Espiritual</h2>
-          <p style={styles.subtitle}>Escolha o Círculo Premium e tenha acesso a benefícios exclusivos na sua jornada de autoconhecimento.</p>
-        </div>
+  // Define os planos baseados no tipo de usuário
+  const planosConsulente = [
+    {
+      id: "GRATIS",
+      nome: "Poeira Estelar",
+      preco: "Grátis",
+      icone: <Star size={24} color="#A89C92" />,
+      destaque: false,
+      beneficios: [
+        "Sessões por R$ 35,00 + taxa",
+        "Chat completo (Texto, Áudio e Imagem)",
+        "Histórico expira em 30 dias",
+      ],
+      botao: "Plano Atual",
+      disabled: true
+    },
+    {
+      id: "ESSENCIAL_CONSULENTE",
+      nome: "Jornada Essencial",
+      preco: "R$ 19,90",
+      mes: "/mês",
+      icone: <Shield size={24} color="#D4AF37" />,
+      destaque: false,
+      beneficios: [
+        "10% de desconto nas consultas",
+        "Histórico Vitalício das sessões",
+        "Radar de Guias (Notificações)",
+        "Resumo IA Simples pós-consulta",
+      ],
+      botao: "Assinar Essencial",
+      disabled: false
+    },
+    {
+      id: "CIRCULO_ARCANO_CONSULENTE",
+      nome: "Círculo Arcano",
+      preco: "R$ 39,90",
+      mes: "/mês",
+      icone: <Crown size={24} color="#110F0E" />,
+      destaque: true,
+      beneficios: [
+        "20% de desconto nas consultas",
+        "Fura-Fila Absoluto",
+        "Dossiê Akáshico Completo (IA)",
+        "Modo Anônimo e Sigiloso",
+        "Gestão de Vínculos (Sinastria)"
+      ],
+      botao: "Entrar para o Círculo",
+      disabled: false
+    }
+  ];
 
-        <div style={styles.toggleContainer}>
-          <span style={{ color: !planoAnual ? '#D4AF37' : '#786C63', fontWeight: '600' }}>Mensal</span>
-          <div style={styles.switch} onClick={() => setPlanoAnual(!planoAnual)}>
-            <div style={{ ...styles.switchKnob, transform: planoAnual ? 'translateX(24px)' : 'translateX(0)' }} />
-          </div>
-          <span style={{ color: planoAnual ? '#D4AF37' : '#786C63', fontWeight: '600' }}>Anual (20% OFF)</span>
-        </div>
+  const planosTarologo = [
+    {
+      id: "GRATIS",
+      nome: "Iniciado",
+      preco: "Grátis",
+      icone: <Star size={24} color="#A89C92" />,
+      destaque: false,
+      beneficios: [
+        "Taxa de 18% (Recebe R$ 28,70)",
+        "Visibilidade padrão na vitrine",
+        "Chat e envio de mídias",
+        "Saque padrão"
+      ],
+      botao: "Plano Atual",
+      disabled: true
+    },
+    {
+      id: "PRO_TAROLOGO",
+      nome: "Guia PRO",
+      preco: "R$ 39,90",
+      mes: "/mês",
+      icone: <Zap size={24} color="#D4AF37" />,
+      destaque: false,
+      beneficios: [
+        "Taxa cai para 9% (Recebe R$ 31,85)",
+        "Selo de Guia Verificado",
+        "Criação de Cupons de Desconto",
+        "Dashboard Financeiro Avançado"
+      ],
+      botao: "Ser Guia PRO",
+      disabled: false
+    },
+    {
+      id: "MESTRE_TAROLOGO",
+      nome: "Mestre Arcano",
+      preco: "R$ 69,90",
+      mes: "/mês",
+      icone: <Sparkles size={24} color="#110F0E" />,
+      destaque: true,
+      beneficios: [
+        "TAXA ZERO (Recebe 100%)",
+        "Destaque Ouro no topo das buscas",
+        "Broadcast Sagrado (Mensagem em massa)",
+        "Saque Instantâneo a qualquer hora",
+        "Vídeo de Apresentação no Perfil"
+      ],
+      botao: "Tornar-se Mestre",
+      disabled: false
+    }
+  ];
 
-        <div style={styles.cardsWrapper}>
-          <div style={styles.cardNormal}>
-            <h3 style={styles.planName}>Jornada Inicial</h3>
-            <div style={styles.priceBox}>
-              <span style={styles.currency}>R$</span>
-              <span style={styles.price}>0</span>
-              <span style={styles.period}>/mês</span>
-            </div>
-            <ul style={styles.featureList}>
-              <li style={styles.featureItem}><Check size={16} color="#786C63" /> Acesso a todos os guias</li>
-              <li style={styles.featureItem}><Check size={16} color="#786C63" /> Fila de espera normal</li>
-              <li style={styles.featureItem}><Check size={16} color="#786C63" /> Histórico de 30 dias</li>
-            </ul>
-            <button style={styles.btnOutline}>Plano Atual</button>
-          </div>
+  const planosParaExibir = role === "TAROLOGO" ? planosTarologo : planosConsulente;
 
-          <div style={styles.cardDestaque}>
-            <div style={styles.badgeTop}><Star size={12} /> MAIS ESCOLHIDO</div>
-            <h3 style={styles.planNameDestaque}>Círculo Premium</h3>
-            <div style={styles.priceBox}>
-              <span style={styles.currencyDestaque}>R$</span>
-              <span style={styles.priceDestaque}>{planoAnual ? '23,90' : '29,90'}</span>
-              <span style={styles.periodDestaque}>/mês</span>
-            </div>
-            <ul style={styles.featureList}>
-              <li style={styles.featureItemDestaque}><Check size={16} color="#D4AF37" /> 1 Tiragem Expressa grátis/mês</li>
-              <li style={styles.featureItemDestaque}><Check size={16} color="#D4AF37" /> Prioridade máxima na fila</li>
-              <li style={styles.featureItemDestaque}><Check size={16} color="#D4AF37" /> Acesso vitalício aos Registros Akáshicos</li>
-              <li style={styles.featureItemDestaque}><Check size={16} color="#D4AF37" /> Horóscopo e trânsitos astrológicos VIP</li>
-            </ul>
-            <button style={styles.btnPrimary}>Assinar Premium <ArrowRight size={16} /></button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleAssinar = async (planoId) => {
+    setProcessando(planoId);
+    try {
+      const response = await api.post("users/planos/checkout/", { plano: planoId });
+      if (response.data.checkout_url) {
+        // Redireciona para o Mercado Pago
+        window.location.href = response.data.checkout_url;
+      }
+    } catch (error) {
+      console.error("Erro ao gerar checkout:", error);
+      alert("Houve um erro ao processar seu pagamento. Tente novamente.");
+      setProcessando(null);
+    }
+  };
 
-  // ==========================================
-  // CONTEÚDO PARA TARÓLOGOS
-  // ==========================================
   return (
     <div style={styles.container}>
+      <button style={styles.btnVoltar} onClick={() => navigate(-1)}>
+        <ArrowLeft size={20} /> Voltar
+      </button>
+
       <div style={styles.header}>
-        <h2 style={styles.title}>Maximize seus Ganhos no Arkanum</h2>
-        <p style={styles.subtitle}>Ferramentas profissionais para expandir sua clientela e reduzir as taxas da plataforma.</p>
+        <h1 style={styles.title}>
+          {role === "TAROLOGO" ? "Evolua sua Jornada Profissional" : "Aprofunde seu Autoconhecimento"}
+        </h1>
+        <p style={styles.subtitle}>
+          Escolha o plano ideal para as suas necessidades e tenha acesso a ferramentas exclusivas do Arkanum.
+        </p>
       </div>
 
-      <div style={styles.cardsWrapper}>
-        <div style={styles.cardNormal}>
-          <h3 style={styles.planName}>Arkanum Básico</h3>
-          <div style={styles.priceBox}>
-            <span style={styles.currency}>R$</span>
-            <span style={styles.price}>0</span>
-            <span style={styles.period}>/mês</span>
-          </div>
-          <ul style={styles.featureList}>
-            <li style={styles.featureItem}><Check size={16} color="#786C63" /> Agenda e Perfil Público</li>
-            <li style={styles.featureItem}><Check size={16} color="#786C63" /> Taxa de 20% por sessão</li>
-            <li style={styles.featureItem}><Check size={16} color="#786C63" /> Saque mensal padrão</li>
-          </ul>
-          <button style={styles.btnOutline}>Plano Atual</button>
-        </div>
+      <div style={styles.gridPlanos}>
+        {planosParaExibir.map((plano) => (
+          <div 
+            key={plano.id} 
+            style={{ 
+              ...styles.cardPlano, 
+              ...(plano.destaque ? styles.cardDestaque : {}) 
+            }}
+          >
+            {plano.destaque && (
+              <div style={styles.tagRecomendado}>Recomendado</div>
+            )}
+            
+            <div style={{...styles.iconWrapper, backgroundColor: plano.destaque ? "#D4AF37" : "#1A1715"}}>
+              {plano.icone}
+            </div>
+            
+            <h3 style={{...styles.planoNome, color: plano.destaque ? "#D4AF37" : "#FDFBF7"}}>
+              {plano.nome}
+            </h3>
+            
+            <div style={styles.precoContainer}>
+              <span style={{...styles.planoPreco, color: plano.destaque ? "#FDFBF7" : "#EAE0C8"}}>
+                {plano.preco}
+              </span>
+              {plano.mes && <span style={styles.planoMes}>{plano.mes}</span>}
+            </div>
 
-        <div style={styles.cardDestaque}>
-          <div style={styles.badgeTop}><Zap size={12} /> PARA PROFISSIONAIS</div>
-          <h3 style={styles.planNameDestaque}>Arkanum Pro</h3>
-          <div style={styles.priceBox}>
-            <span style={styles.currencyDestaque}>R$</span>
-            <span style={styles.priceDestaque}>49,90</span>
-            <span style={styles.periodDestaque}>/mês</span>
+            <ul style={styles.listaBeneficios}>
+              {plano.beneficios.map((beneficio, index) => (
+                <li key={index} style={styles.beneficioItem}>
+                  <Check size={18} color={plano.destaque ? "#D4AF37" : "#786C63"} style={{ flexShrink: 0 }} />
+                  <span style={styles.beneficioTexto}>{beneficio}</span>
+                </li>
+              ))}
+            </ul>
+
+            <button 
+              onClick={() => handleAssinar(plano.id)}
+              disabled={plano.disabled || processando !== null}
+              style={{
+                ...styles.btnAssinar,
+                backgroundColor: plano.disabled ? "#1A1715" : (plano.destaque ? "#D4AF37" : "#2A2420"),
+                color: plano.disabled ? "#786C63" : (plano.destaque ? "#110F0E" : "#FDFBF7"),
+                cursor: (plano.disabled || processando !== null) ? "not-allowed" : "pointer"
+              }}
+            >
+              {processando === plano.id ? (
+                <span style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+                  <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Processando...
+                </span>
+              ) : (
+                plano.botao
+              )}
+            </button>
           </div>
-          <ul style={styles.featureList}>
-            <li style={styles.featureItemDestaque}><Check size={16} color="#D4AF37" /> Taxa reduzida (apenas 10% por sessão)</li>
-            <li style={styles.featureItemDestaque}><Check size={16} color="#D4AF37" /> Selo "Guia Verificado" no perfil</li>
-            <li style={styles.featureItemDestaque}><Check size={16} color="#D4AF37" /> Destaque no topo das buscas</li>
-            <li style={styles.featureItemDestaque}><Check size={16} color="#D4AF37" /> Saques liberados a qualquer momento</li>
-          </ul>
-          <button style={styles.btnPrimary}>Assinar PRO <ArrowRight size={16} /></button>
-        </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// ESTILOS (Mesma identidade do seu painel)
+// ESTILOS
 const styles = {
-  container: { padding: '40px 20px', maxWidth: '900px', margin: '0 auto', fontFamily: "'Inter', sans-serif" },
-  header: { textAlign: 'center', marginBottom: '40px' },
-  title: { color: '#FDFBF7', fontSize: '32px', fontFamily: "'Playfair Display', serif", marginBottom: '12px' },
-  subtitle: { color: '#A89C92', fontSize: '15px', lineHeight: '1.6' },
+  container: { minHeight: "100vh", backgroundColor: "#110F0E", padding: "60px 20px", fontFamily: "'Inter', sans-serif", position: "relative" },
+  btnVoltar: { position: "absolute", top: "40px", left: "40px", display: "flex", alignItems: "center", gap: "8px", backgroundColor: "transparent", border: "none", color: "#A89C92", fontSize: "14px", cursor: "pointer", transition: "color 0.2s" },
+  header: { textAlign: "center", maxWidth: "600px", margin: "0 auto 60px" },
+  title: { fontSize: "36px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", marginBottom: "16px", fontStyle: "italic" },
+  subtitle: { fontSize: "16px", color: "#A89C92", lineHeight: "1.6" },
+  gridPlanos: { display: "flex", gap: "30px", justifyContent: "center", flexWrap: "wrap", maxWidth: "1200px", margin: "0 auto" },
   
-  toggleContainer: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '40px', fontSize: '14px' },
-  switch: { width: '48px', height: '24px', backgroundColor: '#1A1715', borderRadius: '12px', border: '1px solid #3A322C', position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' },
-  switchKnob: { width: '18px', height: '18px', backgroundColor: '#D4AF37', borderRadius: '50%', transition: 'transform 0.3s ease' },
+  cardPlano: { width: "100%", maxWidth: "340px", backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "20px", padding: "40px 30px", display: "flex", flexDirection: "column", position: "relative", transition: "transform 0.3s" },
+  cardDestaque: { border: "2px solid #D4AF37", transform: "scale(1.05)", boxShadow: "0 20px 40px rgba(212, 175, 55, 0.1)", zIndex: 10, backgroundColor: "#151312" },
+  tagRecomendado: { position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", backgroundColor: "#D4AF37", color: "#110F0E", padding: "6px 16px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px" },
   
-  cardsWrapper: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px', alignItems: 'center' },
+  iconWrapper: { width: "56px", height: "56px", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "24px" },
+  planoNome: { fontSize: "20px", fontWeight: "600", marginBottom: "16px", fontFamily: "'Playfair Display', serif" },
+  precoContainer: { display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "32px", paddingBottom: "32px", borderBottom: "1px solid #2A2420" },
+  planoPreco: { fontSize: "36px", fontWeight: "700", letterSpacing: "-1px" },
+  planoMes: { color: "#786C63", fontSize: "16px", fontWeight: "500" },
   
-  cardNormal: { backgroundColor: '#151312', border: '1px solid #2A2420', borderRadius: '16px', padding: '40px 32px', display: 'flex', flexDirection: 'column', height: '100%' },
-  cardDestaque: { backgroundColor: '#1A1715', border: '2px solid #D4AF37', borderRadius: '16px', padding: '40px 32px', position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', transform: 'scale(1.02)', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' },
+  listaBeneficios: { listStyle: "none", padding: 0, margin: "0 0 40px 0", flex: 1, display: "flex", flexDirection: "column", gap: "16px" },
+  beneficioItem: { display: "flex", alignItems: "flex-start", gap: "12px" },
+  beneficioTexto: { color: "#EAE0C8", fontSize: "14px", lineHeight: "1.5" },
   
-  badgeTop: { position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#D4AF37', color: '#151312', padding: '6px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: '800', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '6px' },
-  
-  planName: { color: '#A89C92', fontSize: '18px', fontWeight: '600', marginBottom: '16px' },
-  planNameDestaque: { color: '#FDFBF7', fontSize: '20px', fontWeight: '700', marginBottom: '16px' },
-  
-  priceBox: { display: 'flex', alignItems: 'baseline', marginBottom: '32px' },
-  currency: { color: '#786C63', fontSize: '18px', fontWeight: '600', marginRight: '4px' },
-  price: { color: '#FDFBF7', fontSize: '42px', fontWeight: '800', letterSpacing: '-1px' },
-  period: { color: '#786C63', fontSize: '14px', marginLeft: '4px' },
-  
-  currencyDestaque: { color: '#D4AF37', fontSize: '18px', fontWeight: '600', marginRight: '4px' },
-  priceDestaque: { color: '#D4AF37', fontSize: '48px', fontWeight: '800', letterSpacing: '-1px' },
-  periodDestaque: { color: '#A89C92', fontSize: '14px', marginLeft: '4px' },
-  
-  featureList: { listStyle: 'none', padding: 0, margin: '0 0 40px 0', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' },
-  featureItem: { display: 'flex', alignItems: 'center', gap: '12px', color: '#A89C92', fontSize: '14px' },
-  featureItemDestaque: { display: 'flex', alignItems: 'center', gap: '12px', color: '#EAE0C8', fontSize: '14px' },
-  
-  btnOutline: { width: '100%', padding: '16px', backgroundColor: 'transparent', border: '1px solid #3A322C', color: '#A89C92', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  btnPrimary: { width: '100%', padding: '16px', backgroundColor: '#D4AF37', border: 'none', color: '#151312', borderRadius: '8px', fontSize: '14px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: 'opacity 0.2s', '&:hover': { opacity: 0.9 } }
+  btnAssinar: { width: "100%", padding: "16px", borderRadius: "12px", border: "none", fontSize: "15px", fontWeight: "600", letterSpacing: "0.5px", transition: "all 0.2s" }
 };

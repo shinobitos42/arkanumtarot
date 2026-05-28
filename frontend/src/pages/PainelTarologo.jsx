@@ -20,9 +20,10 @@ export default function PainelTarologo() {
   const [emailUsuario] = useState(localStorage.getItem('user_email') || 'oraculo@arcanum.com');
   const [iniciais] = useState(nomeUsuario.substring(0, 2).toUpperCase());
 
-  // ESTADOS DA FOTO
+  // ESTADOS DA FOTO E PLANO
   const [fotoFile, setFotoFile] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(localStorage.getItem('user_foto') || null);
+  const [nomePlano, setNomePlano] = useState("Iniciado"); // Padrão
   const fileInputRef = useRef(null);
 
   const [estatisticas, setEstatisticas] = useState({ saldo: "0,00", tiragens: 0, consulentes: 0, nota: 5.0 });
@@ -36,10 +37,17 @@ export default function PainelTarologo() {
     localStorage.setItem('aba_ativa_tarologo', aba);
   };
 
+  // 1. CARREGA DADOS DO PERFIL APENAS UMA VEZ
   useEffect(() => {
-    const buscarDadosDoPainel = async () => {
+    const buscarDadosFixos = async () => {
       try {
         const resPerfil = await api.get('users/me/');
+        
+        // Pega o nome do plano da API (Ex: Guia PRO)
+        if (resPerfil.data.nome_plano_atual) {
+            setNomePlano(resPerfil.data.nome_plano_atual);
+        }
+
         setPerfil({
           especialidade: resPerfil.data.tarologo_profile?.especialidade || "",
           biografia: resPerfil.data.tarologo_profile?.biografia || ""
@@ -60,19 +68,35 @@ export default function PainelTarologo() {
           consulentes: resPerfil.data.total_clientes || 0,
           nota: resPerfil.data.tarologo_profile?.nota_media || "5.0"
         });
-
-        const resFila = await api.get('tiragens/sessoes/?status=aguardando_guia');
-        const pedidosAguardando = resFila.data.filter(s => s.status_sessao === 'aguardando_guia');
-        setFilaExpressa(pedidosAguardando);
-
+        setLoading(false);
       } catch (error) {
-        console.error("Erro ao carregar dados do painel:", error);
-      } finally {
+        console.error("Erro ao carregar dados do perfil:", error);
         setLoading(false);
       }
     };
+    buscarDadosFixos();
+  }, []);
 
-    buscarDadosDoPainel();
+  // 2. BUSCA A FILA EXPRESSA AUTOMATICAMENTE A CADA 5 SEGUNDOS
+  useEffect(() => {
+    const buscarFila = async () => {
+      try {
+        const resFila = await api.get('tiragens/sessoes/?status=aguardando_guia');
+        const pedidosAguardando = resFila.data.filter(s => s.status_sessao === 'aguardando_guia');
+        setFilaExpressa(pedidosAguardando);
+      } catch (error) {
+        console.error("Erro ao buscar a fila expressa:", error);
+      }
+    };
+
+    // Busca imediatamente ao abrir a tela
+    buscarFila();
+
+    // Cria um relógio rodando a cada 5000 milissegundos (5 segundos)
+    const intervaloAtualizacao = setInterval(buscarFila, 5000);
+
+    // Limpa o relógio se o usuário sair do painel
+    return () => clearInterval(intervaloAtualizacao);
   }, []);
 
   const aceitarPedido = async (sessaoId) => {
@@ -164,6 +188,21 @@ export default function PainelTarologo() {
             <span style={{ fontSize: "14px", fontWeight: "600" }}>Sair da Conta</span>
           </div>
         </nav>
+
+        {/* CARD DE ASSINATURA NA SIDEBAR DO TARÓLOGO */}
+        <div style={{ marginTop: "auto" }}>
+          <div style={styles.planCard}>
+            <div style={styles.planHeader}>
+              <Sparkles size={20} color="#D4AF37" />
+              <span style={styles.planTitle}>{nomePlano}</span>
+            </div>
+            <p style={styles.planDesc}>Plano Atual</p>
+            <button onClick={() => navigate("/planos")} style={styles.planBtn}>
+              Mudar de Plano
+            </button>
+          </div>
+        </div>
+
       </aside>
 
       <main style={{ ...styles.mainContent, padding: abaAtiva === "Sessões Ativas" ? "0" : "40px 60px" }}>
@@ -257,12 +296,12 @@ export default function PainelTarologo() {
           </div>
         )}
 
-        {/* MINHA AGENDA (COMPONENTE EXTERNO) */}
+        {/* MINHA AGENDA */}
         {abaAtiva === "Minha Agenda" && (
           <AgendaTarologo />
         )}
 
-        {/* FINANÇAS (COMPONENTE EXTERNO) */}
+        {/* FINANÇAS */}
         {abaAtiva === "Finanças" && (
           <FinancasTarologo estatisticas={estatisticas} />
         )}
@@ -299,7 +338,6 @@ export default function PainelTarologo() {
               
               <form onSubmit={handleAtualizarVitrine} style={styles.form}>
                 
-                {/* UPLOAD DE FOTO */}
                 <div style={styles.avatarContainer}>
                   <div style={styles.avatarWrapper} onClick={() => fileInputRef.current.click()}>
                     {fotoPreview ? (
@@ -367,10 +405,10 @@ const NavItem = ({ icon, label, ativo, onClick }) => (
   </div>
 );
 
-// ESTILOS 
+// ESTILOS COMPLETO
 const styles = {
   appContainer: { display: "flex", height: "100vh", backgroundColor: "#110F0E", fontFamily: "'Inter', sans-serif" },
-  sidebar: { width: "260px", backgroundColor: "#151312", borderRight: "1px solid #2A2420", padding: "32px 20px" },
+  sidebar: { display: "flex", flexDirection: "column", width: "260px", backgroundColor: "#151312", borderRight: "1px solid #2A2420", padding: "32px 20px" },
   logoContainer: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "40px" },
   logoText: { fontSize: "22px", color: "#D4AF37", fontFamily: "'Playfair Display', serif", fontStyle: "italic" },
   navMenu: { display: "flex", flexDirection: "column", gap: "4px" },
@@ -417,7 +455,7 @@ const styles = {
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
   label: { color: "#A89C92", fontSize: "13px", fontWeight: "500" },
   
-  // ESTILOS NOVOS DO AVATAR NO TARÓLOGO
+  // ESTILOS DO AVATAR NO TARÓLOGO
   avatarContainer: { display: "flex", alignItems: "center", gap: "20px", paddingBottom: "20px" },
   avatarWrapper: { position: "relative", width: "80px", height: "80px", borderRadius: "50%", cursor: "pointer", overflow: "hidden", border: "2px solid #3A322C", backgroundColor: "#110F0E" },
   avatarImage: { width: "100%", height: "100%", objectFit: "cover" },
@@ -432,5 +470,12 @@ const styles = {
   inputDisabled: { width: "100%", padding: "14px 14px 14px 40px", backgroundColor: "transparent", border: "1px solid #2A2420", borderRadius: "8px", color: "#786C63", fontSize: "14px", cursor: "not-allowed" },
   input: { width: "100%", padding: "14px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", boxSizing: "border-box" },
   textarea: { width: "100%", height: "120px", padding: "14px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", resize: "none", boxSizing: "border-box" },
-  btnSalvar: { padding: "14px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", marginTop: "8px" }
+  btnSalvar: { padding: "14px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", marginTop: "8px" },
+
+  // ESTILOS DO CARD DE PLANO NA SIDEBAR
+  planCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "8px", padding: "16px" },
+  planHeader: { display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" },
+  planTitle: { color: "#FDFBF7", fontSize: "14px", fontWeight: "600" },
+  planDesc: { color: "#A89C92", marginBottom: "12px", marginLeft: "28px", fontSize: "12px" },
+  planBtn: { width: "100%", padding: "8px", backgroundColor: "#D4AF37", border: "none", color: "#110F0E", borderRadius: "4px", cursor: "pointer", fontSize: "12px", fontWeight: "600" }
 };

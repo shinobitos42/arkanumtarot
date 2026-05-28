@@ -28,24 +28,37 @@ const DashboardTarot = () => {
   const [nomeUsuario] = useState(localStorage.getItem('user_name') || 'Viajante');
   const [tarologos, setTarologos] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [nomePlano, setNomePlano] = useState("Poeira Estelar"); // Padrão
 
   useEffect(() => {
-    const buscarTarologos = async () => {
+    // Busca dados dos tarólogos e o plano atual do usuário em paralelo
+    const carregarDados = async () => {
       try {
-        const response = await api.get('users/tarologos/'); 
-        setTarologos(response.data);
+        const [resTarologos, resPerfil] = await Promise.all([
+            api.get('users/tarologos/'),
+            api.get('users/me/')
+        ]);
+        
+        setTarologos(resTarologos.data);
+        
+        // Pega o plano do backend
+        if (resPerfil.data.nome_plano_atual) {
+            setNomePlano(resPerfil.data.nome_plano_atual);
+        }
       } catch (error) {
-        console.error("Erro ao buscar os guias:", error);
+        console.error("Erro ao carregar o dashboard:", error);
       } finally {
         setLoading(false);
       }
     };
-    buscarTarologos();
+    
+    carregarDados();
   }, []);
 
   const mudarAba = (aba) => {
     setAbaAtiva(aba);
-    localStorage.setItem('aba_ativa_consulente', aba); // Atualiza a memória do F5
+    localStorage.setItem('aba_ativa_consulente', aba); 
     setTarologoSelecionado(null);
   };
 
@@ -98,14 +111,15 @@ const DashboardTarot = () => {
           </div>
         </nav>
 
+        {/* CARD DE ASSINATURA NA SIDEBAR DO CONSULENTE */}
         <div style={{ marginTop: "auto" }}>
           <div style={styles.planCard}>
             <div style={styles.planHeader}>
               <ShieldCheck size={20} color="#D4AF37" />
-              <span style={styles.planTitle}>Círculo Premium</span>
+              <span style={styles.planTitle}>{nomePlano}</span>
             </div>
-            <p style={styles.planDesc}>Acesso Ilimitado</p>
-            <button onClick={() => mudarAba("Minha Conta")} style={styles.planBtn}>
+            <p style={styles.planDesc}>Plano Atual</p>
+            <button onClick={() => navigate("/planos")} style={styles.planBtn}>
               Gerenciar Planos
             </button>
           </div>
@@ -310,9 +324,9 @@ const styles = {
   btnOutlineSmall: { padding: "6px 12px", backgroundColor: "transparent", border: "1px solid #3A322C", color: "#A89C92", borderRadius: "4px", cursor: "pointer" },
   planCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "8px", padding: "16px" },
   planHeader: { display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" },
-  planTitle: { color: "#FDFBF7", fontSize: "14px" },
+  planTitle: { color: "#FDFBF7", fontSize: "14px", fontWeight: "600" },
   planDesc: { color: "#A89C92", marginBottom: "12px", marginLeft: "28px", fontSize: "12px" },
-  planBtn: { width: "100%", padding: "8px", backgroundColor: "transparent", border: "1px solid #3A322C", color: "#EAE0C8", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }
+  planBtn: { width: "100%", padding: "8px", backgroundColor: "#D4AF37", border: "none", color: "#110F0E", borderRadius: "4px", cursor: "pointer", fontSize: "12px", fontWeight: "600" }
 };
 
 export default DashboardTarot;

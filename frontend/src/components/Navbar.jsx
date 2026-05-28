@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom';
+import { Moon } from 'lucide-react'; // <-- Importamos a Lua aqui!
 
 export default function Navbar() {
   return (
     <nav style={styles.nav}>
       <div style={styles.logoBox}>
+        {/* A Lua dourada inserida aqui */}
+        <Moon size={24} color="#D4AF37" style={{ marginRight: '8px' }} />
         <h3 style={styles.logoText}>Arkanum</h3>
       </div>
       
       <div style={styles.linkBox}>
         <Link to="/" style={styles.link}>O Espaço</Link>
-        {/* Agora o link de Tarólogos força a pessoa a passar pelo Login */}
         <Link to="/login" style={styles.link}>Tarólogos</Link>
       </div>
 

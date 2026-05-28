@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.timezone import now
 
 class CustomUser(AbstractUser):
     class Role(models.TextChoices):
@@ -15,11 +16,33 @@ class CustomUser(AbstractUser):
     # Necessário para o Perfil do Consulente salvar a data de nascimento sem dar erro 500
     data_nascimento = models.DateField(null=True, blank=True)
     
-    # NOVO: Foto de perfil centralizada para todos os usuários (Consulentes e Tarólogos)
+    # Foto de perfil centralizada para todos os usuários (Consulentes e Tarólogos)
     foto_perfil = models.ImageField(upload_to='fotos_perfil/', null=True, blank=True, verbose_name='Foto de Perfil')
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name']
+
+    @property
+    def is_premium(self):
+        """
+        Retorna True se o usuário tiver uma assinatura ativa e dentro da validade.
+        Facilita verificações rápidas no código inteiro.
+        """
+        if hasattr(self, 'assinatura') and self.assinatura.ativo:
+            if self.assinatura.data_expiracao and self.assinatura.data_expiracao >= now():
+                return True
+        return False
+
+    @property
+    def nome_plano_atual(self):
+        """
+        Retorna o nome do plano atual para facilitar a exibição no frontend.
+        """
+        if self.is_premium:
+            return self.assinatura.get_plano_display()
+        
+        # Se não for premium, retorna o plano gratuito base correspondente
+        return "Iniciado" if self.role == self.Role.TAROLOGO else "Poeira Estelar"
 
     def __str__(self):
         return self.first_name or self.email
@@ -35,6 +58,33 @@ class TarologoProfile(models.Model):
 
     def __str__(self):
         return f"Perfil Pro: {self.user.first_name}"
+
+
+# ==========================================
+# MODELOS DE ASSINATURA E PLANOS (NOVO)
+# ==========================================
+
+class Assinatura(models.Model):
+    class Planos(models.TextChoices):
+        # Planos Consulente
+        ESSENCIAL_CONSULENTE = 'ESSENCIAL_CONSULENTE', 'Jornada Essencial'
+        CIRCULO_ARCANO_CONSULENTE = 'CIRCULO_ARCANO_CONSULENTE', 'Círculo Arcano'
+        
+        # Planos Tarólogo
+        PRO_TAROLOGO = 'PRO_TAROLOGO', 'Guia PRO'
+        MESTRE_TAROLOGO = 'MESTRE_TAROLOGO', 'Mestre Arcano'
+
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='assinatura')
+    plano = models.CharField(max_length=50, choices=Planos.choices)
+    ativo = models.BooleanField(default=False)
+    data_expiracao = models.DateTimeField(null=True, blank=True)
+    
+    # Armazena o ID da assinatura do Mercado Pago ou Stripe para futuras renovações/cancelamentos
+    pagamento_id = models.CharField(max_length=100, null=True, blank=True, help_text="ID externo da plataforma de pagamento")
+
+    def __str__(self):
+        status = "Ativo" if self.ativo else "Inativo"
+        return f"{self.user.first_name} - {self.get_plano_display()} ({status})"
 
 
 # ==========================================
@@ -112,5 +162,5 @@ def criar_perfil_tarologo_automaticamente(sender, instance, created, **kwargs):
             biografia="Perfil em construção.",
             valor_consulta=35.00
         )
-        # NOVO: Já cria uma Agenda vazia automaticamente assim que o tarólogo se cadastra!
+        # Já cria uma Agenda vazia automaticamente assim que o tarólogo se cadastra!
         AgendaTarologo.objects.create(tarologo=perfil)

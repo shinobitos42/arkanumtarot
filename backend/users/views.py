@@ -1,3 +1,5 @@
+import mercadopago
+from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -7,7 +9,7 @@ from django.db.models import Avg
 from django.db import transaction
 from decimal import Decimal
 
-from .models import CustomUser, TarologoProfile, AgendaTarologo, TurnoTrabalho, Folga, TransacaoFinanceira
+from .models import CustomUser, TarologoProfile, AgendaTarologo, TurnoTrabalho, Folga, TransacaoFinanceira, Assinatura
 from tiragens.models import Sessao 
 from .serializers import UserSerializer, TarologoProfileSerializer, CustomTokenObtainPairSerializer, TransacaoFinanceiraSerializer
 
@@ -45,7 +47,9 @@ class UserMeView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(instance)
         data = serializer.data
         
-        data['is_premium'] = False 
+        # Agora buscamos dinamicamente as propriedades do plano criadas no models.py
+        data['is_premium'] = request.user.is_premium 
+        data['nome_plano_atual'] = request.user.nome_plano_atual
         
         if request.user.role == 'TAROLOGO':
             sessoes = Sessao.objects.filter(tarologo=request.user)
@@ -197,4 +201,70 @@ class SolicitarSaqueView(APIView):
         return Response({
             "message": "Pedido de saque registrado com sucesso.",
             "saldo_atualizado": perfil.saldo_disponivel
+        }, status=status.HTTP_200_OK)
+
+
+# ==========================================
+# VIEW PARA CRIAR O CHECKOUT DO PLANO (MERCADO PAGO)
+# ==========================================
+class CriarCheckoutAssinaturaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        plano_escolhido = request.data.get('plano')
+        
+        # 1. Configurar valores baseados nos 4 novos planos
+        if plano_escolhido == 'ESSENCIAL_CONSULENTE':
+            titulo = "Arkanum - Jornada Essencial (Mensal)"
+            valor = 19.90
+        elif plano_escolhido == 'CIRCULO_ARCANO_CONSULENTE':
+            titulo = "Arkanum - Círculo Arcano (Mensal)"
+            valor = 39.90
+        elif plano_escolhido == 'PRO_TAROLOGO':
+            titulo = "Arkanum - Guia PRO (Mensal)"
+            valor = 39.90
+        elif plano_escolhido == 'MESTRE_TAROLOGO':
+            titulo = "Arkanum - Mestre Arcano (Mensal)"
+            valor = 69.90
+        else:
+            return Response({"error": "Plano inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Iniciar a SDK do Mercado Pago
+        sdk = mercadopago.SDK("SEU_ACCESS_TOKEN_DO_MERCADO_PAGO_AQUI")
+
+        # Configura as URLs de retorno de acordo com o tipo de usuário
+        url_sucesso = "https://www.arkanumtarot.com.br/painel-tarologo" if user.role == 'TAROLOGO' else "https://www.arkanumtarot.com.br/painel"
+
+        # 3. Montar os dados da preferência
+        preference_data = {
+            "items": [
+                {
+                    "id": plano_escolhido,
+                    "title": titulo,
+                    "quantity": 1,
+                    "currency_id": "BRL",
+                    "unit_price": float(valor)
+                }
+            ],
+            "payer": {
+                "email": user.email,
+                "name": user.first_name
+            },
+            "back_urls": {
+                "success": url_sucesso,
+                "failure": "https://www.arkanumtarot.com.br/planos",
+                "pending": "https://www.arkanumtarot.com.br/planos"
+            },
+            "auto_return": "approved",
+            # A referência externa é essencial para identificarmos o pagamento no Webhook depois
+            "external_reference": f"assinatura_user_{user.id}_{plano_escolhido}" 
+        }
+
+        # 4. Enviar para o Mercado Pago e pegar o link de pagamento
+        preference_response = sdk.preference().create(preference_data)
+        url_checkout = preference_response["response"]["init_point"]
+
+        return Response({
+            "checkout_url": url_checkout
         }, status=status.HTTP_200_OK)
