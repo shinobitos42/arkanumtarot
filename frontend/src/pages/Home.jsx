@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { Mail } from "lucide-react";
 
 export default function Home() {
@@ -8,16 +7,6 @@ export default function Home() {
 
   return (
     <div style={styles.pageWrapper}>
-      {/* SEO: Otimizado para indexação rápida */}
-      <Helmet>
-        <title>Arkanum | Tarot Online para encontrar paz e clareza</title>
-        <meta 
-          name="description" 
-          content="Encontre a paz interior através do Tarot online. Conecte-se com oraculistas experientes e receba orientações profundas para sua jornada evolutiva no Arkanum." 
-        />
-        <meta name="keywords" content="tarot online, encontrar paz, oráculo, autoconhecimento, consulta tarot, orientações espirituais" />
-      </Helmet>
-      
       {/* SEÇÃO HERO */}
       <section style={styles.heroSection}>
         <div style={styles.heroContainer}>
@@ -25,7 +14,7 @@ export default function Home() {
           <div style={styles.textContent}>
             <p style={styles.kicker}>Sabedoria Ancestral</p>
             <h1 style={styles.heroTitle}>
-              Encontre a <span style={styles.italicGold}>paz</span> que o seu coração procura através do Tarot.
+              Encontre a <span style={styles.italicGold}>paz</span> que o seu coração procura no <span style={styles.italicGold}>Arcanum</span>.
             </h1>
             <p style={styles.heroSubtitle}>
               Um espaço sagrado e acolhedor onde a intuição humana revela os caminhos ocultos do seu destino. Conecte-se com oraculistas experientes e encontre a clareza necessária para a sua jornada evolutiva.
