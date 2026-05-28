@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-// Cria a instância do axios com a URL base do nosso Django
+// Puxa a URL da nuvem se existir a variável, senão usa o localhost padrão
+const apiUrl = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api/` 
+  : 'http://localhost:8000/api/';
+
+// Cria a instância do axios com a URL dinâmica
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/',
+  baseURL: apiUrl,
 });
 
 // Interceptor: Antes de qualquer requisição sair do React, ele passa por aqui
