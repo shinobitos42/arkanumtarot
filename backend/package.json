@@ -3,8 +3,5 @@
     "axios": "^1.16.1",
     "html2pdf.js": "^0.14.0",
     "react-helmet-async": "^3.0.0"
-  },
-  "devDependencies": {
-    "react-router-sitemap-generator": "^0.0.8"
   }
 }
