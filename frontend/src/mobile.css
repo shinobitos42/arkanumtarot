@@ -56,13 +56,20 @@
     border-bottom: 1px solid #2A2420 !important;
   }
   .header-actions {
+    display: flex !important;
+    flex-direction: column !important; /* Empilha os botões um em cima do outro */
+    align-items: stretch !important;
+    gap: 12px !important;
     width: 100% !important;
-    justify-content: space-between !important;
-    flex-wrap: wrap !important;
+  }
+  .header-actions > button, 
+  .header-actions > div {
+    width: 100% !important;
+    justify-content: center !important;
   }
   .search-container {
     width: 100% !important;
-    order: 3 !important; /* Joga a barra de busca para baixo dos ícones */
+    order: 3 !important; 
     margin-top: 8px !important;
   }
   
@@ -76,7 +83,7 @@
   .sidebar-dashboard {
     position: fixed !important;
     top: 0 !important;
-    left: -100% !important; /* Fora da tela por padrão */
+    left: -100% !important; 
     width: 280px !important;
     height: 100dvh !important;
     z-index: 999 !important;
@@ -87,10 +94,9 @@
     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
   }
   .sidebar-dashboard.aberto {
-    left: 0 !important; /* Desliza para dentro da tela */
+    left: 0 !important; 
   }
 
-  /* Overlay escuro atrás do menu */
   .menu-overlay {
     display: block !important;
     position: fixed !important;
@@ -100,9 +106,7 @@
     opacity: 0; pointer-events: none; transition: opacity 0.3s;
     backdrop-filter: blur(2px);
   }
-  .menu-overlay.aberto {
-    opacity: 1; pointer-events: auto;
-  }
+  .menu-overlay.aberto { opacity: 1; pointer-events: auto; }
 
   /* 6. CORPO PRINCIPAL E GRIDS */
   .main-content {
@@ -114,30 +118,25 @@
     flex-direction: column !important;
     gap: 20px !important;
   }
+  .coluna-direita-mobile {
+    position: relative !important;
+    top: 0 !important;
+  }
+  .header-mobile-col {
+    flex-direction: column !important;
+    text-align: center !important;
+  }
 
   /* 7. MENSAGENS CHAT MOBILE */
   .mensagens-container {
-    margin: 0 !important;
-    height: 100dvh !important;
-    border-top: none !important;
-    display: flex !important;
-    flex-direction: row !important;
-    width: 100vw !important;
-    position: relative;
-    overflow: hidden !important;
+    margin: 0 !important; height: 100dvh !important; border-top: none !important; display: flex !important; flex-direction: row !important; width: 100vw !important; position: relative; overflow: hidden !important;
   }
   .chat-sidebar {
-    width: 100vw !important; height: 100dvh !important; border-right: none !important;
-    position: absolute; top: 0; left: 0; z-index: 10;
-    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    background-color: #151312 !important;
+    width: 100vw !important; height: 100dvh !important; border-right: none !important; position: absolute; top: 0; left: 0; z-index: 10; transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); background-color: #151312 !important;
   }
   .chat-sidebar.oculto-mobile { transform: translateX(-100%); }
   .chat-area {
-    width: 100vw !important; height: 100dvh !important;
-    position: absolute; top: 0; left: 0; z-index: 20;
-    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    background-color: #110F0E !important;
+    width: 100vw !important; height: 100dvh !important; position: absolute; top: 0; left: 0; z-index: 20; transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); background-color: #110F0E !important;
   }
   .chat-area.oculto-mobile { transform: translateX(100%); }
   .chat-header { padding: 12px 16px !important; }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Users, Layers, Zap, Search, Bell, Moon, 
-  MessageCircle, Settings, Check, ChevronDown, Lock, Star, LogOut, Clock, Sparkles, TrendingUp, Loader2, Camera, CalendarDays, Menu
+  MessageCircle, Settings, Check, ChevronDown, Lock, Star, LogOut, Clock, Sparkles, TrendingUp, Loader2, Camera, CalendarDays, Menu, Plus, Trash2
 } from "lucide-react";
 
 import api from "../services/api"; 
@@ -14,7 +14,7 @@ export default function PainelTarologo() {
   const navigate = useNavigate();
   
   const [abaAtiva, setAbaAtiva] = useState(localStorage.getItem('aba_ativa_tarologo') || "Fila Expressa");
-  const [menuAberto, setMenuAberto] = useState(false); // NOVO: Controle do Menu Mobile
+  const [menuAberto, setMenuAberto] = useState(false); 
 
   const [nomeUsuario] = useState(localStorage.getItem('user_name') || 'Guia');
   const [emailUsuario] = useState(localStorage.getItem('user_email') || 'oraculo@arcanum.com');
@@ -27,14 +27,22 @@ export default function PainelTarologo() {
 
   const [estatisticas, setEstatisticas] = useState({ saldo: "0,00", tiragens: 0, consulentes: 0, nota: 5.0 });
   const [filaExpressa, setFilaExpressa] = useState([]);
+  
+  // DADOS DO PERFIL
   const [perfil, setPerfil] = useState({ especialidade: "", biografia: "" });
+  
+  // NOVO: CARDÁPIO DE TIRAGENS E VALORES
+  const [tiposTiragem, setTiposTiragem] = useState([]);
+  const [novoServicoNome, setNovoServicoNome] = useState("");
+  const [novoServicoValor, setNovoServicoValor] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
 
   const mudarAba = (aba) => {
     setAbaAtiva(aba);
     localStorage.setItem('aba_ativa_tarologo', aba);
-    setMenuAberto(false); // NOVO: Fecha o menu automaticamente
+    setMenuAberto(false); 
   };
 
   useEffect(() => {
@@ -48,6 +56,14 @@ export default function PainelTarologo() {
           biografia: resPerfil.data.tarologo_profile?.biografia || ""
         });
         
+        // Puxa os serviços customizados do banco (ou inicia um cardápio padrão)
+        if (resPerfil.data.tarologo_profile?.tipos_tiragem && resPerfil.data.tarologo_profile.tipos_tiragem.length > 0) {
+            setTiposTiragem(resPerfil.data.tarologo_profile.tipos_tiragem);
+        } else {
+            // Se ele nunca criou, damos sugestões base
+            setTiposTiragem([{ id: 1, nome: "Tiragem Objetiva", valor: "35.00" }]);
+        }
+
         if (resPerfil.data.foto_perfil) {
           setFotoPreview(resPerfil.data.foto_perfil);
           localStorage.setItem('user_foto', resPerfil.data.foto_perfil);
@@ -57,12 +73,7 @@ export default function PainelTarologo() {
           ? parseFloat(resPerfil.data.tarologo_profile.saldo_disponivel).toFixed(2).replace('.', ',') 
           : "0,00";
 
-        setEstatisticas({
-          saldo: saldoFormatado,
-          tiragens: resPerfil.data.total_tiragens || 0,
-          consulentes: resPerfil.data.total_clientes || 0,
-          nota: resPerfil.data.tarologo_profile?.nota_media || "5.0"
-        });
+        setEstatisticas({ saldo: saldoFormatado, tiragens: resPerfil.data.total_tiragens || 0, consulentes: resPerfil.data.total_clientes || 0, nota: resPerfil.data.tarologo_profile?.nota_media || "5.0" });
         setLoading(false);
       } catch (error) {
         console.error("Erro ao carregar dados do perfil:", error);
@@ -76,13 +87,9 @@ export default function PainelTarologo() {
     const buscarFila = async () => {
       try {
         const resFila = await api.get('tiragens/sessoes/?status=aguardando_guia');
-        const pedidosAguardando = resFila.data.filter(s => s.status_sessao === 'aguardando_guia');
-        setFilaExpressa(pedidosAguardando);
-      } catch (error) {
-        console.error("Erro ao buscar a fila expressa:", error);
-      }
+        setFilaExpressa(resFila.data.filter(s => s.status_sessao === 'aguardando_guia'));
+      } catch (error) { console.error("Erro ao buscar a fila expressa:", error); }
     };
-
     buscarFila();
     const intervaloAtualizacao = setInterval(buscarFila, 5000);
     return () => clearInterval(intervaloAtualizacao);
@@ -93,17 +100,25 @@ export default function PainelTarologo() {
       await api.patch(`tiragens/sessoes/${sessaoId}/`, { status_sessao: 'ao_vivo' });
       setFilaExpressa(filaExpressa.filter(pedido => pedido.id !== sessaoId));
       mudarAba("Sessões Ativas"); 
-    } catch (error) {
-      alert("Houve um erro ao aceitar a sessão. Outro guia já pode ter assumido.");
-    }
+    } catch (error) { alert("Houve um erro ao aceitar a sessão. Outro guia já pode ter assumido."); }
   };
 
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFotoFile(file);
-      setFotoPreview(URL.createObjectURL(file));
-    }
+    if (file) { setFotoFile(file); setFotoPreview(URL.createObjectURL(file)); }
+  };
+
+  // ADICIONAR E REMOVER SERVIÇOS (TIRAGENS)
+  const adicionarServico = () => {
+    if (!novoServicoNome || !novoServicoValor) return;
+    const novo = { id: Date.now(), nome: novoServicoNome, valor: parseFloat(novoServicoValor).toFixed(2) };
+    setTiposTiragem([...tiposTiragem, novo]);
+    setNovoServicoNome("");
+    setNovoServicoValor("");
+  };
+
+  const removerServico = (id) => {
+    setTiposTiragem(tiposTiragem.filter(t => t.id !== id));
   };
 
   const handleAtualizarVitrine = async (e) => {
@@ -114,42 +129,31 @@ export default function PainelTarologo() {
     if (fotoFile) formData.append('foto_perfil', fotoFile);
     formData.append('especialidade', perfil.especialidade);
     formData.append('biografia', perfil.biografia);
+    // Transforma o array de serviços em texto para enviar ao Django
+    formData.append('tipos_tiragem', JSON.stringify(tiposTiragem));
 
     try {
       const response = await api.patch('/users/me/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      if (response.data.foto_perfil) {
-        localStorage.setItem('user_foto', response.data.foto_perfil);
-      }
-      alert("Vitrine atualizada com sucesso!");
-    } catch (error) {
-      alert("Erro ao atualizar o perfil.");
-    } finally {
-      setSalvando(false);
-    }
+      if (response.data.foto_perfil) localStorage.setItem('user_foto', response.data.foto_perfil);
+      alert("Vitrine e Cardápio de Tiragens atualizados com sucesso!");
+    } catch (error) { alert("Erro ao atualizar o perfil."); } finally { setSalvando(false); }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  const handleLogout = () => { localStorage.clear(); navigate('/login'); };
 
   const extrairEnergia = (textoContexto) => {
-    if (!textoContexto) return "Não informada";
-    const match = textoContexto.match(/\[Energia do Consulente:\s*(.*?)\]/);
+    const match = textoContexto?.match(/\[Energia do Consulente:\s*(.*?)\]/);
     return match ? match[1] : "Não informada";
   };
-
   const extrairContextoLimpo = (textoContexto) => {
-    if (!textoContexto) return "";
-    return textoContexto.replace(/\[Energia do Consulente:.*?\][\r\n\s]*/g, '').trim();
+    return textoContexto?.replace(/\[Energia do Consulente:.*?\][\r\n\s]*/g, '').trim() || "";
   };
 
   return (
     <div className={`app-container ${abaAtiva === 'Sessões Ativas' ? 'app-modo-chat' : ''}`} style={styles.appContainer}>
       
-      {/* NOVO: OVERLAY ESCURO PARA O MENU MOBILE */}
       <div className={`menu-overlay ${menuAberto ? 'aberto' : ''}`} onClick={() => setMenuAberto(false)}></div>
 
       <aside className={`sidebar-dashboard ${menuAberto ? 'aberto' : ''}`} style={styles.sidebar}>
@@ -191,18 +195,13 @@ export default function PainelTarologo() {
         
         {abaAtiva !== "Sessões Ativas" && (
           <header className="header-dashboard" style={styles.header}>
-            
-            {/* NOVO: AGRUPAMENTO DO HAMBURGUER */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                <button className="menu-hamburger" onClick={() => setMenuAberto(true)} style={{ background: 'none', border: 'none', padding: 0 }}>
                  <Menu size={28} color="#D4AF37" />
                </button>
                <h1 className="breadcrumb-desktop page-title" style={{...styles.pageTitle, margin: 0}}>{abaAtiva}</h1>
-               <h2 className="mobile-title" style={{ color: '#D4AF37', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 }}>
-                  Arkanum Pro
-               </h2>
+               <h2 className="mobile-title" style={{ color: '#D4AF37', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 }}>Arkanum Pro</h2>
             </div>
-
             <div className="header-actions" style={styles.headerActions}>
               <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
               <button onClick={() => mudarAba("Meu Perfil")} style={styles.userProfileBtn}>
@@ -272,7 +271,7 @@ export default function PainelTarologo() {
           <div className="grid-mobile" style={styles.profileContainer}>
             <div style={styles.cardSettings}>
               <h3 style={styles.sectionTitle}>Dados de Acesso</h3>
-              <p style={{ color: "#A89C92", fontSize: "13px", marginBottom: "24px" }}>Estes dados são protegidos e usados para faturamento e login.</p>
+              <p style={{ color: "#A89C92", fontSize: "13px", marginBottom: "24px" }}>Estes dados são protegidos.</p>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Nome Completo</label>
                 <div style={styles.inputWrapperDisabled}>
@@ -287,10 +286,47 @@ export default function PainelTarologo() {
                   <input type="email" value={emailUsuario} disabled style={styles.inputDisabled} />
                 </div>
               </div>
-              <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '24px 0' }} />
+              
+              <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '32px 0' }} />
+              
+              <h3 style={styles.sectionTitle}>Cardápio de Serviços e Valores</h3>
+              <p style={{ color: "#A89C92", fontSize: "13px", marginBottom: "24px" }}>Defina os tipos de tiragens que você oferece aos consulentes e os valores.</p>
+              
+              <div style={styles.servicosList}>
+                {tiposTiragem.map((servico) => (
+                  <div key={servico.id} style={styles.servicoItem}>
+                    <div style={styles.servicoInfo}>
+                      <span style={styles.servicoNome}>{servico.nome}</span>
+                      <span style={styles.servicoValor}>R$ {servico.valor}</span>
+                    </div>
+                    <button type="button" onClick={() => removerServico(servico.id)} style={styles.btnIconDelete} title="Remover serviço"><Trash2 size={16}/></button>
+                  </div>
+                ))}
+              </div>
+
+              <div style={styles.addServicoForm}>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Tiragem Amorosa" 
+                  value={novoServicoNome} 
+                  onChange={(e) => setNovoServicoNome(e.target.value)} 
+                  style={{...styles.input, flex: 1.5}} 
+                />
+                <input 
+                  type="number" 
+                  placeholder="Ex: 50.00" 
+                  value={novoServicoValor} 
+                  onChange={(e) => setNovoServicoValor(e.target.value)} 
+                  style={{...styles.input, flex: 1}} 
+                />
+                <button type="button" onClick={adicionarServico} style={styles.btnAddServico}><Plus size={18}/></button>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '32px 0' }} />
+
               <h3 style={styles.sectionTitle}>Vitrine do Guia (Público)</h3>
               <form onSubmit={handleAtualizarVitrine} style={styles.form}>
-                <div className="header" style={styles.avatarContainer}>
+                <div className="header-mobile-col" style={styles.avatarContainer}>
                   <div style={styles.avatarWrapper} onClick={() => fileInputRef.current.click()}>
                     {fotoPreview ? <img src={fotoPreview} alt="Sua foto de perfil" style={styles.avatarImage} /> : <div style={styles.avatarPlaceholder}><Camera size={32} color="#786C63" /></div>}
                     <div style={styles.avatarOverlay}><Camera size={24} color="#FDFBF7" /></div>
@@ -302,14 +338,14 @@ export default function PainelTarologo() {
                   <input type="file" accept="image/png, image/jpeg" ref={fileInputRef} onChange={handleFotoChange} style={{ display: 'none' }} />
                 </div>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Especialidade Principal</label>
+                  <label style={styles.label}>Sua Especialidade Principal (Ex: Taróloga e Astróloga)</label>
                   <input type="text" value={perfil.especialidade} onChange={(e) => setPerfil({...perfil, especialidade: e.target.value})} style={styles.input} />
                 </div>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Biografia e Metodologia</label>
                   <textarea value={perfil.biografia} onChange={(e) => setPerfil({...perfil, biografia: e.target.value})} placeholder="Conte aos consulentes..." style={styles.textarea}></textarea>
                 </div>
-                <button type="submit" style={styles.btnSalvar} disabled={salvando}>{salvando ? "Atualizando..." : "Atualizar Vitrine"}</button>
+                <button type="submit" style={styles.btnSalvar} disabled={salvando}>{salvando ? "Salvando..." : "Salvar Alterações do Perfil"}</button>
               </form>
             </div>
           </div>
@@ -348,7 +384,7 @@ const styles = {
   userName: { color: "#FDFBF7", fontSize: "14px", fontWeight: "500", marginRight: "4px" },
 
   sectionContainer: { marginTop: "0" },
-  sectionTitle: { color: "#FDFBF7", fontSize: "20px", fontFamily: "'Playfair Display', serif", marginBottom: "20px" },
+  sectionTitle: { color: "#FDFBF7", fontSize: "20px", fontFamily: "'Playfair Display', serif", marginBottom: "8px" },
   emptyFilaBox: { backgroundColor: '#151312', border: '1px dashed #2A2420', borderRadius: '12px', padding: '60px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' },
   onlineStatusBadge: { display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '13px', fontWeight: '500', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 12px', borderRadius: '20px' },
   dotOnline: { width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%', boxShadow: '0 0 8px rgba(16,185,129,0.5)' },
@@ -374,7 +410,18 @@ const styles = {
   cardSettings: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px" },
   form: { display: "flex", flexDirection: "column", gap: "24px" },
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
-  label: { color: "#A89C92", fontSize: "13px", fontWeight: "500" },
+  label: { color: "#A89C92", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" },
+  
+  // CARDÁPIO DE SERVIÇOS
+  servicosList: { display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" },
+  servicoItem: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#110F0E", padding: "16px", borderRadius: "8px", border: "1px solid #2A2420" },
+  servicoInfo: { display: "flex", flexDirection: "column", gap: "4px" },
+  servicoNome: { color: "#FDFBF7", fontSize: "15px", fontWeight: "500" },
+  servicoValor: { color: "#D4AF37", fontSize: "14px", fontWeight: "600" },
+  btnIconDelete: { background: "none", border: "none", color: "#786C63", cursor: "pointer", padding: "8px", borderRadius: "4px", transition: "all 0.2s", '&:hover': { color: "#ef4444", backgroundColor: "rgba(239, 68, 68, 0.1)" } },
+  addServicoForm: { display: "flex", gap: "12px", alignItems: "stretch" },
+  btnAddServico: { padding: "0 20px", backgroundColor: "#3A322C", color: "#FDFBF7", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s", '&:hover': { backgroundColor: "#D4AF37", color: "#151312" } },
+
   avatarContainer: { display: "flex", alignItems: "center", gap: "20px", paddingBottom: "20px" },
   avatarWrapper: { position: "relative", width: "80px", height: "80px", borderRadius: "50%", cursor: "pointer", overflow: "hidden", border: "2px solid #3A322C", backgroundColor: "#110F0E" },
   avatarImage: { width: "100%", height: "100%", objectFit: "cover" },
@@ -389,7 +436,7 @@ const styles = {
   inputDisabled: { width: "100%", padding: "14px 14px 14px 40px", backgroundColor: "transparent", border: "1px solid #2A2420", borderRadius: "8px", color: "#786C63", fontSize: "14px", cursor: "not-allowed" },
   input: { width: "100%", padding: "14px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", boxSizing: "border-box" },
   textarea: { width: "100%", height: "120px", padding: "14px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", resize: "none", boxSizing: "border-box" },
-  btnSalvar: { padding: "14px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", marginTop: "8px" },
+  btnSalvar: { padding: "18px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", marginTop: "8px", transition: "opacity 0.2s" },
 
   planCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "8px", padding: "16px" },
   planHeader: { display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" },

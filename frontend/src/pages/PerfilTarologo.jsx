@@ -1,20 +1,78 @@
-import React, { useState } from "react";
-import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check, User } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check, User, Sparkles } from "lucide-react";
+import api from "../services/api";
 
 export default function PerfilTarologo({ tarologo, onVoltar }) {
+  // ESTADOS DO AGENDAMENTO
+  const [servicoSelecionado, setServicoSelecionado] = useState(null);
   const [dataSelecionada, setDataSelecionada] = useState("");
   const [horaSelecionada, setHoraSelecionada] = useState("");
+  
+  // ESTADOS DA AGENDA REAL DO BANCO
+  const [agendaReal, setAgendaReal] = useState({});
+  const [datasDisponiveis, setDatasDisponiveis] = useState([]);
+  const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
+  const [carregandoAgenda, setCarregandoAgenda] = useState(true);
+
   const [agendadoComSucesso, setAgendadoComSucesso] = useState(false);
 
-  const datasDisponiveis = ["26/05", "27/05", "28/05", "29/05"];
-  const horariosDisponiveis = ["09:00", "11:00", "14:00", "16:00", "19:00", "21:00"];
+  // DADOS DO GUIA (Já Puxados Corretamente na Busca)
+  const nomeGuia = tarologo?.user?.first_name || tarologo?.user?.username || "Guia Espiritual";
+  const fotoGuia = tarologo?.foto_perfil || null;
+  const especialidade = tarologo?.especialidade || "Tarólogo";
+  const biografia = tarologo?.biografia || "A energia está fluindo e pronta para a leitura.";
+  const notaMedia = tarologo?.nota_media || "5.0";
+  
+  // Mapeia o cardápio de tiragens, se não tiver, cria a padrão
+  const cardapioTiragens = (tarologo?.tipos_tiragem && tarologo?.tipos_tiragem.length > 0) 
+    ? typeof tarologo.tipos_tiragem === 'string' ? JSON.parse(tarologo.tipos_tiragem) : tarologo.tipos_tiragem
+    : [{ id: 1, nome: "Tiragem Completa", valor: tarologo?.valor_consulta || "35.00" }];
+
+  // 1. BUSCA A AGENDA REAL DO BANCO DE DADOS
+  useEffect(() => {
+    const buscarAgenda = async () => {
+      try {
+        const response = await api.get(`users/tarologos/${tarologo.id}/horarios/`);
+        const agendaData = response.data; // Ex: { "2026-05-26": ["09:00", "10:00"], "2026-05-27": ["14:00"] }
+        setAgendaReal(agendaData);
+        setDatasDisponiveis(Object.keys(agendaData));
+      } catch (error) {
+        console.error("Erro ao buscar agenda:", error);
+        // FALLBACK: Caso a rota do backend não exista ainda, criamos uma agenda falsa para não quebrar a tela
+        const hoje = new Date();
+        const amanha = new Date(); amanha.setDate(hoje.getDate() + 1);
+        const data1 = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        const data2 = amanha.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        
+        const mockAgenda = {
+          [data1]: ["09:00", "11:00", "14:00"],
+          [data2]: ["10:30", "15:00", "18:00"]
+        };
+        setAgendaReal(mockAgenda);
+        setDatasDisponiveis(Object.keys(mockAgenda));
+      } finally {
+        setCarregandoAgenda(false);
+      }
+    };
+    if (tarologo?.id) buscarAgenda();
+  }, [tarologo]);
+
+  // 2. ATUALIZA OS HORÁRIOS QUANDO O USUÁRIO CLICA NO DIA
+  useEffect(() => {
+    if (dataSelecionada && agendaReal[dataSelecionada]) {
+      setHorariosDisponiveis(agendaReal[dataSelecionada]);
+      setHoraSelecionada(""); // Reseta a hora ao mudar o dia
+    } else {
+      setHorariosDisponiveis([]);
+    }
+  }, [dataSelecionada, agendaReal]);
 
   const handleAgendar = (e) => {
     e.preventDefault();
-    if (!dataSelecionada || !horaSelecionada) return;
+    if (!servicoSelecionado || !dataSelecionada || !horaSelecionada) return;
     
     setAgendadoComSucesso(true);
-    console.log("Agendamento realizado:", { dataSelecionada, horaSelecionada, tarologo: tarologo.nome });
+    // Aqui conectaremos ao Checkout Transparente depois!
   };
 
   if (agendadoComSucesso) {
@@ -25,7 +83,7 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
         </div>
         <h2 style={styles.successTitle}>Tiragem Agendada!</h2>
         <p style={styles.successText}>
-          Sua sessão com <strong>{tarologo.nome}</strong> foi reservada para o dia <strong>{dataSelecionada}</strong> às <strong>{horaSelecionada}</strong>.
+          Sua <strong>{servicoSelecionado.nome}</strong> com <strong>{nomeGuia}</strong> foi reservada para o dia <strong>{dataSelecionada}</strong> às <strong>{horaSelecionada}</strong>.
         </p>
         <button onClick={onVoltar} style={styles.btnPrimary}>Voltar ao Espaço</button>
       </div>
@@ -38,15 +96,13 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
         <ChevronLeft size={16} /> Voltar para a lista
       </button>
 
-      <div style={styles.profileLayout}>
-        {/* COLUNA DA ESQUERDA: INFORMAÇÕES DO GUIA */}
+      <div className="grid-mobile" style={styles.profileLayout}>
+        
         <div style={styles.colEsquerda}>
           
-          <div style={styles.profileHeaderCard}>
-            
-            {/* AVATAR COM FALLBACK PARA FOTO DO BACKEND */}
-            {tarologo.foto_perfil || tarologo.img ? (
-               <img src={tarologo.foto_perfil || tarologo.img} alt={tarologo.nome} style={styles.profileAvatar} />
+          <div className="header-mobile-col" style={styles.profileHeaderCard}>
+            {fotoGuia ? (
+               <img src={fotoGuia} alt={nomeGuia} style={styles.profileAvatar} />
             ) : (
                <div style={styles.avatarPlaceholder}>
                  <User size={40} color="#786C63" />
@@ -54,13 +110,12 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
             )}
            
             <div style={styles.profileHeaderInfo}>
-              <span style={styles.tagSpec}>{tarologo.especialidade}</span>
-              <h1 style={styles.profileName}>{tarologo.nome}</h1>
+              <span style={styles.tagSpec}>{especialidade}</span>
+              <h1 style={styles.profileName}>{nomeGuia}</h1>
               <div style={styles.ratingRow}>
                 <div style={styles.ratingBadge}>
-                  <Star size={12} fill="#151312" color="#151312" /> {tarologo.nota}
+                  <Star size={12} fill="#151312" color="#151312" /> {notaMedia}
                 </div>
-                <span style={styles.sessoesCount}>{tarologo.sessoes} tiragens realizadas</span>
               </div>
             </div>
           </div>
@@ -69,9 +124,7 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
             <h3 style={styles.sectionTitle}>
               <Award size={18} color="#D4AF37" /> Trajetória e Conexão
             </h3>
-            <p style={styles.sectionText}>
-              Dedico minha vida ao estudo dos oráculos ancestrais, enxergando o Tarot não como uma ferramenta de adivinhação imutável, mas como um espelho da alma e um guia para o livre-arbítrio. Com mais de 5 anos de experiência, busco trazer leituras acolhedoras, objetivas e profundas para iluminar suas tomadas de decisão.
-            </p>
+            <p style={styles.sectionText}>{biografia}</p>
           </div>
 
           <div style={styles.sectionCard}>
@@ -84,82 +137,97 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
                   <strong style={styles.reviewUser}>Mariana R.</strong>
                   <div style={styles.reviewStars}><Star size={10} fill="#D4AF37" color="#D4AF37" /> 5.0</div>
                 </div>
-                <p style={styles.reviewText}>"A leitura foi extremamente cirúrgica. Consegui enxergar caminhos profissionais que antes pareciam bloqueados. Recomendo muito a Sofia!"</p>
-              </div>
-              <div style={styles.reviewItem}>
-                <div style={styles.reviewMeta}>
-                  <strong style={styles.reviewUser}>Carlos H.</strong>
-                  <div style={styles.reviewStars}><Star size={10} fill="#D4AF37" color="#D4AF37" /> 5.0</div>
-                </div>
-                <p style={styles.reviewText}>"Ambiente de absoluto respeito e acolhimento. Me senti muito seguro e as respostas me trouxeram muita paz interior."</p>
+                <p style={styles.reviewText}>"A leitura foi extremamente cirúrgica. Consegui enxergar caminhos que pareciam bloqueados."</p>
               </div>
             </div>
           </div>
 
         </div>
 
-        {/* COLUNA DA DIREITA: AGENDAMENTO */}
-        <div style={styles.colDireita}>
+        <div className="coluna-direita-mobile" style={styles.colDireita}>
           <div style={styles.agendamentoCard}>
-            <h3 style={styles.agendarTitle}>Reservar Tiragem</h3>
             
-            <div style={styles.priceRow}>
-              <span style={styles.priceLabel}>Troca Energética</span>
-              <span style={styles.priceValue}>{tarologo.valor}</span>
+            <h3 style={styles.agendarTitle}>Reservar Leitura</h3>
+
+            {/* SELEÇÃO DO TIPO DE TIRAGEM (CARDÁPIO) */}
+            <div style={styles.formGroup}>
+              <label style={styles.inputLabel}>
+                <Sparkles size={14} style={{ marginRight: '6px' }} /> 1. Escolha a sua Tiragem
+              </label>
+              <div style={styles.servicosGridSelect}>
+                {cardapioTiragens.map((servico) => {
+                  const isActive = servicoSelecionado?.id === servico.id;
+                  return (
+                    <div 
+                      key={servico.id} 
+                      onClick={() => setServicoSelecionado(servico)}
+                      style={{ ...styles.servicoCardSelect, ...(isActive ? styles.servicoCardAtivo : {}) }}
+                    >
+                      <h4 style={{ ...styles.sCardNome, color: isActive ? '#D4AF37' : '#FDFBF7' }}>{servico.nome}</h4>
+                      <p style={{ ...styles.sCardValor, color: isActive ? '#D4AF37' : '#A89C92' }}>R$ {servico.valor}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+            
+            <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '24px 0' }} />
 
             <form onSubmit={handleAgendar} style={styles.agendamentoForm}>
               <div style={styles.formGroup}>
                 <label style={styles.inputLabel}>
-                  <Calendar size={14} style={{ marginRight: '6px' }} /> Selecione o Dia
+                  <Calendar size={14} style={{ marginRight: '6px' }} /> 2. Selecione o Dia
                 </label>
-                <div style={styles.selectorGrid}>
-                  {datasDisponiveis.map((data) => (
-                    <button
-                      key={data}
-                      type="button"
-                      style={{
-                        ...styles.selectorBtn,
-                        ...(dataSelecionada === data ? styles.selectorBtnAtivo : {})
-                      }}
-                      onClick={() => setDataSelecionada(data)}
-                    >
-                      {data}
-                    </button>
-                  ))}
-                </div>
+                
+                {carregandoAgenda ? (
+                   <p style={styles.loadingText}>Conectando ao calendário astral...</p>
+                ) : datasDisponiveis.length === 0 ? (
+                   <p style={styles.erroText}>A agenda deste guia está completamente preenchida.</p>
+                ) : (
+                  <div style={styles.selectorGrid}>
+                    {datasDisponiveis.map((data) => (
+                      <button
+                        key={data}
+                        type="button"
+                        style={{ ...styles.selectorBtn, ...(dataSelecionada === data ? styles.selectorBtnAtivo : {}) }}
+                        onClick={() => setDataSelecionada(data)}
+                      >
+                        {data}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.inputLabel}>
-                  <Clock size={14} style={{ marginRight: '6px' }} /> Horários Disponíveis
-                </label>
-                <div style={styles.selectorGridHoras}>
-                  {horariosDisponiveis.map((hora) => (
-                    <button
-                      key={hora}
-                      type="button"
-                      style={{
-                        ...styles.selectorBtn,
-                        ...(horaSelecionada === hora ? styles.selectorBtnAtivo : {})
-                      }}
-                      onClick={() => setHoraSelecionada(hora)}
-                    >
-                      {hora}
-                    </button>
-                  ))}
+              {dataSelecionada && (
+                <div style={styles.formGroup}>
+                  <label style={styles.inputLabel}>
+                    <Clock size={14} style={{ marginRight: '6px' }} /> 3. Horários Disponíveis
+                  </label>
+                  <div style={styles.selectorGridHoras}>
+                    {horariosDisponiveis.map((hora) => (
+                      <button
+                        key={hora}
+                        type="button"
+                        style={{ ...styles.selectorBtn, ...(horaSelecionada === hora ? styles.selectorBtnAtivo : {}) }}
+                        onClick={() => setHoraSelecionada(hora)}
+                      >
+                        {hora}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <button
                 type="submit"
-                disabled={!dataSelecionada || !horaSelecionada}
+                disabled={!servicoSelecionado || !dataSelecionada || !horaSelecionada}
                 style={{
                   ...styles.btnConfirmar,
-                  ...(!dataSelecionada || !horaSelecionada ? styles.btnConfirmarDesativado : {})
+                  ...(!servicoSelecionado || !dataSelecionada || !horaSelecionada ? styles.btnConfirmarDesativado : {})
                 }}
               >
-                Confirmar e Agendar
+                Confirmar Leitura ({servicoSelecionado ? `R$ ${servicoSelecionado.valor}` : "..."})
               </button>
             </form>
 
@@ -169,6 +237,7 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
@@ -182,8 +251,6 @@ const styles = {
   colEsquerda: { display: "flex", flexDirection: "column", gap: "24px" },
   profileHeaderCard: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px", display: "flex", gap: "24px", alignItems: "center" },
   profileAvatar: { width: "100px", height: "100px", borderRadius: "12px", objectFit: "cover", border: "1px solid #3A322C" },
-  
-  // ESTILO PARA QUANDO NÃO HÁ FOTO DO TARÓLOGO
   avatarPlaceholder: { width: "100px", height: "100px", borderRadius: "12px", backgroundColor: "#110F0E", border: "1px solid #3A322C", display: "flex", alignItems: "center", justifyContent: "center" },
   
   profileHeaderInfo: { display: "flex", flexDirection: "column", gap: "6px" },
@@ -191,11 +258,10 @@ const styles = {
   profileName: { fontSize: "28px", fontWeight: "normal", color: "#FDFBF7", fontFamily: "'Playfair Display', serif" },
   ratingRow: { display: "flex", alignItems: "center", gap: "12px", marginTop: "4px" },
   ratingBadge: { display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "700", color: "#151312", backgroundColor: "#D4AF37", padding: "2px 6px", borderRadius: "4px" },
-  sessoesCount: { color: "#786C63", fontSize: "13px" },
 
   sectionCard: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px" },
   sectionTitle: { display: "flex", alignItems: "center", gap: "8px", fontSize: "18px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", marginBottom: "16px", fontWeight: "normal" },
-  sectionText: { color: "#A89C92", fontSize: "14px", lineHeight: "1.7", fontWeight: "300" },
+  sectionText: { color: "#A89C92", fontSize: "14px", lineHeight: "1.7", fontWeight: "300", whiteSpace: "pre-wrap" },
 
   reviewsList: { display: "flex", flexDirection: "column", gap: "16px" },
   reviewItem: { borderBottom: "1px solid #2A2420", paddingBottom: "16px" },
@@ -206,20 +272,28 @@ const styles = {
 
   colDireita: { position: "sticky", top: "24px" },
   agendamentoCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "12px", padding: "32px" },
-  agendarTitle: { color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontSize: "20px", marginBottom: "20px", fontWeight: "normal" },
-  priceRow: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "20px", borderBottom: "1px solid #2A2420", marginBottom: "24px" },
-  priceLabel: { color: "#A89C92", fontSize: "14px" },
-  priceValue: { color: "#D4AF37", fontSize: "22px", fontFamily: "'Playfair Display', serif" },
+  agendarTitle: { color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontSize: "20px", marginBottom: "24px", fontWeight: "normal" },
+  
+  // ESTILOS DE SELEÇÃO DE SERVIÇO
+  servicosGridSelect: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" },
+  servicoCardSelect: { backgroundColor: "#110F0E", border: "1px solid #2A2420", borderRadius: "8px", padding: "16px", cursor: "pointer", transition: "all 0.2s", textAlign: "center", display: "flex", flexDirection: "column", gap: "4px" },
+  servicoCardAtivo: { borderColor: "#D4AF37", backgroundColor: "rgba(212, 175, 55, 0.05)" },
+  sCardNome: { fontSize: "13px", fontWeight: "600", margin: 0, transition: "color 0.2s" },
+  sCardValor: { fontSize: "12px", margin: 0, transition: "color 0.2s" },
+
   agendamentoForm: { display: "flex", flexDirection: "column", gap: "24px" },
   formGroup: { display: "flex", flexDirection: "column", gap: "12px" },
-  inputLabel: { display: "flex", alignItems: "center", color: "#A89C92", fontSize: "13px" },
+  inputLabel: { display: "flex", alignItems: "center", color: "#A89C92", fontSize: "13px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" },
   
+  loadingText: { color: "#D4AF37", fontSize: "13px", fontStyle: "italic" },
+  erroText: { color: "#ef4444", fontSize: "13px", fontStyle: "italic" },
+
   selectorGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" },
   selectorGridHoras: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" },
-  selectorBtn: { padding: "10px 0", backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "6px", color: "#A89C92", fontSize: "13px", cursor: "pointer", transition: "all 0.2s", fontFamily: "'Inter', sans-serif" },
-  selectorBtnAtivo: { backgroundColor: "transparent", borderColor: "#D4AF37", color: "#D4AF37", fontWeight: "600" },
+  selectorBtn: { padding: "10px 0", backgroundColor: "#110F0E", border: "1px solid #2A2420", borderRadius: "6px", color: "#A89C92", fontSize: "13px", cursor: "pointer", transition: "all 0.2s", fontFamily: "'Inter', sans-serif" },
+  selectorBtnAtivo: { backgroundColor: "transparent", borderColor: "#D4AF37", color: "#D4AF37", fontWeight: "700" },
   
-  btnConfirmar: { width: "100%", padding: "16px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "6px", fontSize: "13px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", transition: "opacity 0.2s", marginTop: "8px" },
+  btnConfirmar: { width: "100%", padding: "18px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", transition: "opacity 0.2s", marginTop: "8px" },
   btnConfirmarDesativado: { backgroundColor: "#2A2420", color: "#786C63", cursor: "not-allowed" },
   garantiaBox: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#786C63", fontSize: "11px", marginTop: "20px" },
 
