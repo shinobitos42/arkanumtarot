@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Users, Layers, Zap, Search, Bell, Moon, 
-  MessageCircle, Settings, Check, ChevronDown, Lock, Star, LogOut, Clock, Sparkles, TrendingUp, Loader2, Camera, CalendarDays
+  MessageCircle, Settings, Check, ChevronDown, Lock, Star, LogOut, Clock, Sparkles, TrendingUp, Loader2, Camera, CalendarDays, Menu
 } from "lucide-react";
 
 import api from "../services/api"; 
@@ -14,7 +14,8 @@ export default function PainelTarologo() {
   const navigate = useNavigate();
   
   const [abaAtiva, setAbaAtiva] = useState(localStorage.getItem('aba_ativa_tarologo') || "Fila Expressa");
-  
+  const [menuAberto, setMenuAberto] = useState(false); // NOVO: Controle do Menu Mobile
+
   const [nomeUsuario] = useState(localStorage.getItem('user_name') || 'Guia');
   const [emailUsuario] = useState(localStorage.getItem('user_email') || 'oraculo@arcanum.com');
   const [iniciais] = useState(nomeUsuario.substring(0, 2).toUpperCase());
@@ -33,6 +34,7 @@ export default function PainelTarologo() {
   const mudarAba = (aba) => {
     setAbaAtiva(aba);
     localStorage.setItem('aba_ativa_tarologo', aba);
+    setMenuAberto(false); // NOVO: Fecha o menu automaticamente
   };
 
   useEffect(() => {
@@ -88,15 +90,10 @@ export default function PainelTarologo() {
 
   const aceitarPedido = async (sessaoId) => {
     try {
-      await api.patch(`tiragens/sessoes/${sessaoId}/`, {
-        status_sessao: 'ao_vivo'
-      });
-      
+      await api.patch(`tiragens/sessoes/${sessaoId}/`, { status_sessao: 'ao_vivo' });
       setFilaExpressa(filaExpressa.filter(pedido => pedido.id !== sessaoId));
       mudarAba("Sessões Ativas"); 
-      
     } catch (error) {
-      console.error("Erro ao aceitar pedido:", error);
       alert("Houve um erro ao aceitar a sessão. Outro guia já pode ter assumido.");
     }
   };
@@ -127,7 +124,6 @@ export default function PainelTarologo() {
       }
       alert("Vitrine atualizada com sucesso!");
     } catch (error) {
-      console.error("Erro ao salvar vitrine:", error);
       alert("Erro ao atualizar o perfil.");
     } finally {
       setSalvando(false);
@@ -153,7 +149,10 @@ export default function PainelTarologo() {
   return (
     <div className={`app-container ${abaAtiva === 'Sessões Ativas' ? 'app-modo-chat' : ''}`} style={styles.appContainer}>
       
-      <aside className="sidebar-dashboard" style={styles.sidebar}>
+      {/* NOVO: OVERLAY ESCURO PARA O MENU MOBILE */}
+      <div className={`menu-overlay ${menuAberto ? 'aberto' : ''}`} onClick={() => setMenuAberto(false)}></div>
+
+      <aside className={`sidebar-dashboard ${menuAberto ? 'aberto' : ''}`} style={styles.sidebar}>
         <div style={styles.logoContainer}>
           <Moon size={28} color="#D4AF37" />
           <h2 style={styles.logoText}>Arkanum Pro</h2>
@@ -192,10 +191,21 @@ export default function PainelTarologo() {
         
         {abaAtiva !== "Sessões Ativas" && (
           <header className="header-dashboard" style={styles.header}>
-            <h1 className="page-title" style={styles.pageTitle}>{abaAtiva}</h1>
+            
+            {/* NOVO: AGRUPAMENTO DO HAMBURGUER */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+               <button className="menu-hamburger" onClick={() => setMenuAberto(true)} style={{ background: 'none', border: 'none', padding: 0 }}>
+                 <Menu size={28} color="#D4AF37" />
+               </button>
+               <h1 className="breadcrumb-desktop page-title" style={{...styles.pageTitle, margin: 0}}>{abaAtiva}</h1>
+               <h2 className="mobile-title" style={{ color: '#D4AF37', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 }}>
+                  Arkanum Pro
+               </h2>
+            </div>
+
             <div className="header-actions" style={styles.headerActions}>
               <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
-              <button style={styles.userProfileBtn}>
+              <button onClick={() => mudarAba("Meu Perfil")} style={styles.userProfileBtn}>
                 <div style={styles.userAvatar}>{iniciais}</div>
                 <span style={styles.userName}>{nomeUsuario}</span>
                 <ChevronDown size={14} color="#786C63" />
@@ -251,7 +261,6 @@ export default function PainelTarologo() {
           </div>
         )}
 
-        {/* O SEGREDO DO APP NATIVO PARA O GUIA */}
         {abaAtiva === "Sessões Ativas" && (
            <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Fila Expressa')} />
         )}

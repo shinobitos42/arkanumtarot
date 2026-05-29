@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Search, Calendar, Star, MessageCircle, ShieldCheck, 
   Moon, ChevronRight, Bot, LayoutDashboard, History, Bell, 
-  Zap, CalendarPlus, ChevronDown, LogOut, HelpCircle, Heart, Briefcase, Compass, Lock
+  Zap, CalendarPlus, ChevronDown, LogOut, HelpCircle, Heart, Briefcase, Compass, Lock, Menu
 } from "lucide-react";
 
 import api from "../services/api";
@@ -21,6 +21,7 @@ const DashboardTarot = () => {
   const [busca, setBusca] = useState("");
   
   const [abaAtiva, setAbaAtiva] = useState(localStorage.getItem('aba_ativa_consulente') || "Visão Geral");
+  const [menuAberto, setMenuAberto] = useState(false); // NOVO: Controle do Menu Mobile
   
   const [tarologoSelecionado, setTarologoSelecionado] = useState(null);
   const [nomeUsuario] = useState(localStorage.getItem('user_name') || 'Viajante');
@@ -45,7 +46,6 @@ const DashboardTarot = () => {
         setLoading(false);
       }
     };
-    
     carregarDados();
   }, []);
 
@@ -53,6 +53,7 @@ const DashboardTarot = () => {
     setAbaAtiva(aba);
     localStorage.setItem('aba_ativa_consulente', aba); 
     setTarologoSelecionado(null);
+    setMenuAberto(false); // NOVO: Fecha o menu automaticamente ao clicar numa aba
   };
 
   const handleLogout = () => {
@@ -73,7 +74,10 @@ const DashboardTarot = () => {
   return (
     <div className={`app-container ${abaAtiva === 'Mensagens' ? 'app-modo-chat' : ''}`} style={styles.appContainer}>
       
-      <aside className="sidebar-dashboard" style={styles.sidebar}>
+      {/* NOVO: OVERLAY ESCURO PARA O MENU MOBILE */}
+      <div className={`menu-overlay ${menuAberto ? 'aberto' : ''}`} onClick={() => setMenuAberto(false)}></div>
+
+      <aside className={`sidebar-dashboard ${menuAberto ? 'aberto' : ''}`} style={styles.sidebar}>
         <div style={styles.logoContainer}>
           <Moon size={28} color="#D4AF37" />
           <h2 style={styles.logoText}>Arcanum</h2>
@@ -117,10 +121,23 @@ const DashboardTarot = () => {
         
         {abaAtiva !== "Mensagens" && (
           <header className="header-dashboard" style={styles.header}>
-            <div style={styles.breadcrumb}>
-              <span style={styles.breadcrumbLink}>Arcanum</span>
-              <span style={styles.breadcrumbSeparator}>/</span>
-              <span style={styles.breadcrumbActive}>{tarologoSelecionado ? "Perfil do Guia" : abaAtiva}</span>
+            
+            {/* NOVO: AGRUPAMENTO DO HAMBURGUER E BREADCRUMB */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+               <button className="menu-hamburger" onClick={() => setMenuAberto(true)} style={{ background: 'none', border: 'none', padding: 0 }}>
+                 <Menu size={28} color="#D4AF37" />
+               </button>
+               
+               <div className="breadcrumb-desktop" style={styles.breadcrumb}>
+                 <span style={styles.breadcrumbLink}>Arcanum</span>
+                 <span style={styles.breadcrumbSeparator}>/</span>
+                 <span style={styles.breadcrumbActive}>{tarologoSelecionado ? "Perfil do Guia" : abaAtiva}</span>
+               </div>
+               
+               {/* TÍTULO EXCLUSIVO PARA O MOBILE */}
+               <h2 className="mobile-title" style={{ color: '#D4AF37', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 }}>
+                  Arcanum
+               </h2>
             </div>
 
             <div className="header-actions" style={styles.headerActions}>
@@ -176,7 +193,7 @@ const DashboardTarot = () => {
                           <h3 style={styles.iaTitle}>Concierge Arcanum</h3>
                           <span style={styles.tagConstrucao}>Em Construção</span>
                         </div>
-                        <p style={styles.iaDesc}>Nossa IA que analisa sua energia e encontra o oraculista ideal estará disponível assim que o círculo se expandir.</p>
+                        <p style={styles.iaDesc}>Nossa IA que analisa sua energia e encontra o oraculista ideal estará disponível em breve.</p>
                       </div>
                       <button disabled style={styles.btnIaBloqueado}><Lock size={16} /> Disponível em Breve</button>
                     </div>
@@ -223,12 +240,7 @@ const DashboardTarot = () => {
             {abaAtiva === "Tiragem Expressa" && <TiragemExpressa />}
             {abaAtiva === "Minha Conta" && <PerfilUsuario />}
             {abaAtiva === "Tiragens Agendadas" && <TiragensAgendadas mudarAba={mudarAba} />}
-            
-            {/* O SEGREDO DO MODO NATIVO ESTÁ AQUI */}
-            {abaAtiva === "Mensagens" && (
-              <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Visão Geral')} />
-            )}
-            
+            {abaAtiva === "Mensagens" && <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Visão Geral')} />}
             {abaAtiva === "Registros Akáshicos" && <RegistrosAkashicos />}
             {abaAtiva === "Ajuda e Suporte" && <Suporte />} 
           </>

@@ -1,48 +1,112 @@
 /* ==========================================
    ARQUIVO GLOBAL - MODO APP NATIVO
 ================================================= */
-@media (max-width: 768px) {
-  /* 1. RESET PARA PREVENIR ZOOM E CLIQUES ESTRANHOS NO IOS/ANDROID */
-  * {
-    -webkit-tap-highlight-color: transparent;
-  }
-  input, textarea, select {
-    font-size: 16px !important; /* Impede que o iPhone dê zoom automático ao digitar */
-  }
 
-  /* 2. O CONTAINER PRINCIPAL VIRA RESPONSIVO */
+/* Esconde as ferramentas de App no Desktop */
+.menu-hamburger { display: none !important; }
+.menu-overlay { display: none !important; }
+.mobile-title { display: none !important; }
+.btn-voltar-mobile {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  margin-left: -8px;
+}
+
+@media (max-width: 768px) {
+  /* 1. RESET PARA PREVENIR ZOOM NO IPHONE/ANDROID */
+  * { -webkit-tap-highlight-color: transparent; }
+  input, textarea, select { font-size: 16px !important; }
+
+  /* 2. O CONTAINER PRINCIPAL */
   .app-container {
     flex-direction: column !important;
     overflow-y: auto !important;
-    height: 100dvh !important; /* dvh respeita a barra de endereço do navegador */
+    height: 100dvh !important; 
     min-height: 100dvh !important;
   }
 
-  /* 3. MODO CHAT FULLSCREEN (Esconde o painel inteiro e foca só na conversa) */
-  .app-modo-chat {
-    overflow: hidden !important;
-  }
+  /* 3. MODO CHAT FULLSCREEN (Oculta header e paineis) */
+  .app-modo-chat { overflow: hidden !important; }
   .app-modo-chat .sidebar-dashboard,
-  .app-modo-chat .header-dashboard {
-    display: none !important;
-  }
+  .app-modo-chat .header-dashboard { display: none !important; }
   .app-modo-chat .main-content {
     padding: 0 !important;
     height: 100dvh !important;
     overflow: hidden !important;
   }
 
-  /* 4. DASHBOARD NORMAL */
-  .sidebar-dashboard {
-    width: 100% !important;
-    height: auto !important;
-    border-right: none !important;
+  /* ==========================================
+     4. HEADER FIXO (TOPO DA TELA)
+  ============================================= */
+  .header-dashboard {
+    position: sticky !important;
+    top: 0 !important;
+    background-color: #110F0E !important;
+    z-index: 100 !important;
+    margin-bottom: 20px !important;
+    padding: 16px 20px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
     border-bottom: 1px solid #2A2420 !important;
-    padding: 20px !important;
-    flex-shrink: 0;
   }
+  .header-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+  }
+  .search-container {
+    width: 100% !important;
+    order: 3 !important; /* Joga a barra de busca para baixo dos ícones */
+    margin-top: 8px !important;
+  }
+  
+  .menu-hamburger { display: block !important; cursor: pointer; }
+  .breadcrumb-desktop { display: none !important; }
+  .mobile-title { display: block !important; }
+
+  /* ==========================================
+     5. MENU LATERAL DESLIZANTE (DRAWER)
+  ============================================= */
+  .sidebar-dashboard {
+    position: fixed !important;
+    top: 0 !important;
+    left: -100% !important; /* Fora da tela por padrão */
+    width: 280px !important;
+    height: 100dvh !important;
+    z-index: 999 !important;
+    transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    border-right: 1px solid #2A2420 !important;
+    background-color: #151312 !important;
+    padding: 24px !important;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  }
+  .sidebar-dashboard.aberto {
+    left: 0 !important; /* Desliza para dentro da tela */
+  }
+
+  /* Overlay escuro atrás do menu */
+  .menu-overlay {
+    display: block !important;
+    position: fixed !important;
+    top: 0; left: 0; width: 100vw; height: 100dvh;
+    background: rgba(0,0,0,0.7);
+    z-index: 998;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    backdrop-filter: blur(2px);
+  }
+  .menu-overlay.aberto {
+    opacity: 1; pointer-events: auto;
+  }
+
+  /* 6. CORPO PRINCIPAL E GRIDS */
   .main-content {
-    padding: 20px !important;
+    padding: 0 20px 20px 20px !important;
     flex: 1;
   }
   .grid-mobile {
@@ -50,19 +114,8 @@
     flex-direction: column !important;
     gap: 20px !important;
   }
-  .header-dashboard {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 20px !important;
-  }
-  .header-actions {
-    width: 100% !important;
-    justify-content: space-between !important;
-  }
 
-  /* ====================================================
-     5. O CORAÇÃO DO CHAT (EFEITO WHATSAPP)
-  ======================================================= */
+  /* 7. MENSAGENS CHAT MOBILE */
   .mensagens-container {
     margin: 0 !important;
     height: 100dvh !important;
@@ -73,77 +126,25 @@
     position: relative;
     overflow: hidden !important;
   }
-
-  /* A Lista de Contatos (Desliza pra esquerda quando abre um chat) */
   .chat-sidebar {
-    width: 100vw !important;
-    height: 100dvh !important;
-    border-right: none !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 10;
+    width: 100vw !important; height: 100dvh !important; border-right: none !important;
+    position: absolute; top: 0; left: 0; z-index: 10;
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     background-color: #151312 !important;
   }
-  .chat-sidebar.oculto-mobile {
-    transform: translateX(-100%);
-  }
-
-  /* A Área de Conversa (Desliza da direita para a esquerda ao abrir) */
+  .chat-sidebar.oculto-mobile { transform: translateX(-100%); }
   .chat-area {
-    width: 100vw !important;
-    height: 100dvh !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 20;
+    width: 100vw !important; height: 100dvh !important;
+    position: absolute; top: 0; left: 0; z-index: 20;
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     background-color: #110F0E !important;
   }
-  .chat-area.oculto-mobile {
-    transform: translateX(100%);
-  }
-
-  /* Ajustes finos de espaçamento interno da conversa */
-  .chat-header {
-    padding: 12px 16px !important;
-  }
-  .chat-messages {
-    padding: 16px !important;
-  }
-  .message-bubble {
-    max-width: 85% !important; /* Bolhas maiores para facilitar leitura */
-  }
-  
-  /* Input grudado no fundo */
-  .chat-input-container {
-    padding: 12px 12px 24px 12px !important; /* Espaço extra embaixo pro iPhone */
-    background-color: #1A1715 !important;
-    border-top: 1px solid #2A2420 !important;
-  }
-  .chat-input-wrapper {
-    border-radius: 24px !important;
-    padding: 6px 12px !important;
-  }
-
-  /* Botão Voltar exclusivo do mobile */
-  .btn-voltar-mobile {
-    display: flex !important;
-  }
-  .menu-toggle-desktop {
-    display: none !important;
-  }
-}
-
-/* NO COMPUTADOR: O botão voltar fica invisível e as telas ficam lado a lado! */
-.btn-voltar-mobile {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  margin-left: -8px;
+  .chat-area.oculto-mobile { transform: translateX(100%); }
+  .chat-header { padding: 12px 16px !important; }
+  .chat-messages { padding: 16px !important; }
+  .message-bubble { max-width: 85% !important; }
+  .chat-input-container { padding: 12px 12px 24px 12px !important; background-color: #1A1715 !important; border-top: 1px solid #2A2420 !important; }
+  .chat-input-wrapper { border-radius: 24px !important; padding: 6px 12px !important; }
+  .btn-voltar-mobile { display: flex !important; }
+  .menu-toggle-desktop { display: none !important; }
 }
