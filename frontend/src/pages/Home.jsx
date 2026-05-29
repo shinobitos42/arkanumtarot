@@ -7,12 +7,12 @@ export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div style={styles.pageWrapper}>
+    <div className="app-container" style={styles.pageWrapper}>
       <Navbar />
 
       {/* SEÇÃO HERO */}
       <section style={styles.heroSection}>
-        <div style={styles.heroContainer}>
+        <div className="grid-mobile" style={styles.heroContainer}>
           
           <div style={styles.textContent}>
             <p style={styles.kicker}>Sabedoria Ancestral</p>
@@ -50,7 +50,7 @@ export default function Home() {
 
       {/* SEÇÃO DE PILARES */}
       <section style={styles.pilaresSection}>
-        <div style={styles.pilaresGrid}>
+        <div className="grid-mobile" style={styles.pilaresGrid}>
           
           <div style={styles.pilarItem}>
             <span style={styles.pilarNumber}>01</span>
@@ -81,7 +81,7 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer style={styles.footer}>
-        <div style={styles.footerContainer}>
+        <div className="grid-mobile" style={styles.footerContainer}>
           
           <div style={styles.footerBrand}>
             <h3 style={styles.footerLogo}>Arkanum</h3>

@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Search, Calendar, Star, MessageCircle, ShieldCheck, 
-  Moon, ChevronRight, Bot, Sparkles, 
-  LayoutDashboard, History, Bell, 
-  Zap, CalendarPlus, ChevronDown, LogOut, HelpCircle, Heart, Briefcase, Compass
+  Moon, ChevronRight, Bot, LayoutDashboard, History, Bell, 
+  Zap, CalendarPlus, ChevronDown, LogOut, HelpCircle, Heart, Briefcase, Compass, Lock
 } from "lucide-react";
 
 import api from "../services/api";
@@ -21,7 +20,6 @@ const DashboardTarot = () => {
   const navigate = useNavigate();
   const [busca, setBusca] = useState("");
   
-  // SALVA A ABA NO NAVEGADOR PARA SOBREVIVER AO F5
   const [abaAtiva, setAbaAtiva] = useState(localStorage.getItem('aba_ativa_consulente') || "Visão Geral");
   
   const [tarologoSelecionado, setTarologoSelecionado] = useState(null);
@@ -29,10 +27,9 @@ const DashboardTarot = () => {
   const [tarologos, setTarologos] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const [nomePlano, setNomePlano] = useState("Poeira Estelar"); // Padrão
+  const [nomePlano, setNomePlano] = useState("Poeira Estelar"); 
 
   useEffect(() => {
-    // Busca dados dos tarólogos e o plano atual do usuário em paralelo
     const carregarDados = async () => {
       try {
         const [resTarologos, resPerfil] = await Promise.all([
@@ -42,7 +39,6 @@ const DashboardTarot = () => {
         
         setTarologos(resTarologos.data);
         
-        // Pega o plano do backend
         if (resPerfil.data.nome_plano_atual) {
             setNomePlano(resPerfil.data.nome_plano_atual);
         }
@@ -82,7 +78,7 @@ const DashboardTarot = () => {
   return (
     <div className="app-container" style={styles.appContainer}>
       
-      <aside style={styles.sidebar}>
+      <aside className="sidebar" style={styles.sidebar}>
         <div style={styles.logoContainer}>
           <Moon size={28} color="#D4AF37" />
           <h2 style={styles.logoText}>Arcanum</h2>
@@ -111,7 +107,6 @@ const DashboardTarot = () => {
           </div>
         </nav>
 
-        {/* CARD DE ASSINATURA NA SIDEBAR DO CONSULENTE */}
         <div style={{ marginTop: "auto" }}>
           <div style={styles.planCard}>
             <div style={styles.planHeader}>
@@ -126,8 +121,8 @@ const DashboardTarot = () => {
         </div>
       </aside>
 
-      <main style={styles.mainContent}>
-        <header style={styles.header}>
+      <main className="main-content" style={styles.mainContent}>
+        <header className="header" style={styles.header}>
           <div style={styles.breadcrumb}>
             <span style={styles.breadcrumbLink}>Arcanum</span>
             <span style={styles.breadcrumbSeparator}>/</span>
@@ -136,8 +131,8 @@ const DashboardTarot = () => {
             </span>
           </div>
 
-          <div style={styles.headerActions}>
-            <div style={styles.searchContainer}>
+          <div className="header-actions" style={styles.headerActions}>
+            <div className="search-container" style={styles.searchContainer}>
               <Search size={16} color="#786C63" style={styles.searchIcon} />
               <input type="text" placeholder="Buscar guias, especialidades..." style={styles.searchInput} value={busca} onChange={(e) => setBusca(e.target.value)} />
             </div>
@@ -157,12 +152,12 @@ const DashboardTarot = () => {
             {abaAtiva === "Visão Geral" && (
               <>
                 <div style={{ marginBottom: "40px" }}>
-                  <h1 style={styles.pageTitle}>A clareza te espera, {nomeUsuario}.</h1>
+                  <h1 className="page-title" style={styles.pageTitle}>A clareza te espera, {nomeUsuario}.</h1>
                   <p style={styles.pageSubtitle}>Onde você precisa de iluminação hoje?</p>
                 </div>
 
-                <div style={styles.intentionsGrid}>
-                  <div style={styles.areaCardsContainer}>
+                <div className="grid-mobile" style={styles.intentionsGrid}>
+                  <div className="grid-mobile" style={styles.areaCardsContainer}>
                     <div onClick={() => mudarAba("Tiragem Expressa")} style={styles.areaCard}>
                       <div style={{...styles.areaIconBox, backgroundColor: "rgba(239, 68, 68, 0.1)"}}>
                         <Heart size={24} color="#ef4444" />
@@ -189,22 +184,29 @@ const DashboardTarot = () => {
                   </div>
 
                   <div style={styles.iaBanner}>
-                    <div style={styles.iaBannerContent}>
+                    <div className="grid-mobile" style={styles.iaBannerContent}>
                       <div style={styles.iaIconWrapper}>
                         <Bot size={28} color="#151312" />
                       </div>
                       <div>
-                        <h3 style={styles.iaTitle}>Concierge Arcanum</h3>
-                        <p style={styles.iaDesc}>Nossa IA analisa seu momento e ajuda a encontrar o oraculista ideal para sua energia atual.</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <h3 style={styles.iaTitle}>Concierge Arcanum</h3>
+                          <span style={styles.tagConstrucao}>Em Construção</span>
+                        </div>
+                        <p style={styles.iaDesc}>
+                          Nossa IA que analisa sua energia e encontra o oraculista ideal estará disponível assim que o círculo de guias se expandir.
+                        </p>
                       </div>
-                      <button style={styles.btnPrimary}><Sparkles size={16} /> Encontrar Meu Guia</button>
+                      <button disabled style={styles.btnIaBloqueado}>
+                        <Lock size={16} /> Disponível em Breve
+                      </button>
                     </div>
                   </div>
                 </div>
 
                 <div style={styles.listSection}>
-                  <div style={styles.listHeader}>
-                    <h3 style={styles.sectionTitle}>Guias Espirituais em Destaque</h3>
+                  <div className="header" style={styles.listHeader}>
+                    <h3 className="page-title" style={styles.sectionTitle}>Guias Espirituais em Destaque</h3>
                     <button style={styles.linkBtn}>Ver o Círculo Completo <ChevronRight size={16} /></button>
                   </div>
 
@@ -213,7 +215,7 @@ const DashboardTarot = () => {
                   ) : tarologos.length === 0 ? (
                     <p style={{ color: '#A89C92' }}>Nenhum guia cadastrado no momento. O círculo está se formando.</p>
                   ) : (
-                    <div style={styles.tarologosGrid}>
+                    <div className="grid-mobile" style={styles.tarologosGrid}>
                       {tarologos.map((guia) => (
                         <div key={guia.id} onClick={() => setTarologoSelecionado(guia)} style={styles.guiaCard}>
                           
@@ -300,10 +302,12 @@ const styles = {
 
   iaBanner: { background: "linear-gradient(135deg, #151312 0%, #1A1715 100%)", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px", display: "flex", alignItems: "center" },
   iaBannerContent: { display: "flex", flexDirection: "column", gap: "20px" },
-  iaIconWrapper: { backgroundColor: "#D4AF37", padding: "12px", borderRadius: "8px", width: "fit-content" },
-  iaTitle: { color: "#D4AF37", fontFamily: "'Playfair Display', serif", fontSize: "20px" },
-  iaDesc: { color: "#A89C92", lineHeight: "1.6", fontSize: "14px" },
-  btnPrimary: { display: "flex", alignItems: "center", gap: "8px", padding: "12px 20px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" },
+  iaIconWrapper: { backgroundColor: "#D4AF37", padding: "12px", borderRadius: "8px", width: "fit-content", opacity: 0.6 },
+  iaTitle: { color: "#786C63", fontFamily: "'Playfair Display', serif", fontSize: "20px" },
+  iaDesc: { color: "#786C63", lineHeight: "1.6", fontSize: "14px" },
+  
+  tagConstrucao: { backgroundColor: "#2A2420", color: "#D4AF37", fontSize: "10px", padding: "4px 8px", borderRadius: "4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "1px" },
+  btnIaBloqueado: { display: "flex", alignItems: "center", gap: "8px", padding: "12px 20px", backgroundColor: "#2A2420", color: "#786C63", border: "1px solid #3A322C", borderRadius: "6px", cursor: "not-allowed", fontWeight: "600", width: "fit-content" },
   
   listSection: { marginTop: "10px" },
   listHeader: { display: "flex", justifyContent: "space-between", marginBottom: "24px" },

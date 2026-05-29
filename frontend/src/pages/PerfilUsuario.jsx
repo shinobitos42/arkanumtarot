@@ -1,29 +1,51 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { User, Mail, Calendar, Shield, Lock, Camera, Check } from "lucide-react";
-import api from "../services/api"; // Importando a instância do Axios configurada
+import api from "../services/api"; 
 
 export default function PerfilUsuario() {
-  // Puxa os dados reais de quem fez login
-  const nomeUsuario = localStorage.getItem('user_name') || 'Usuário';
-  const emailUsuario = localStorage.getItem('user_email') || 'email@exemplo.com'; 
-  const fotoAtual = localStorage.getItem('user_foto'); 
+  const navigate = useNavigate();
+
+  // Estados com os dados (busca do banco de dados para evitar erro do localStorage)
+  const [nomeUsuario, setNomeUsuario] = useState(localStorage.getItem('user_name') || 'Usuário');
+  const [emailUsuario, setEmailUsuario] = useState(localStorage.getItem('user_email') || 'Carregando...'); 
   
   const [dataNascimento, setDataNascimento] = useState("");
-  
-  // Estados para a foto de perfil
   const [fotoFile, setFotoFile] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState(fotoAtual || null);
+  const [fotoPreview, setFotoPreview] = useState(localStorage.getItem('user_foto') || null);
+  
   const [loading, setLoading] = useState(false);
   const [sucesso, setSucesso] = useState(false);
 
   const fileInputRef = useRef(null);
 
-  // Função que lida com a escolha do arquivo
+  // BUSCA OS DADOS REAIS DIRETO DO BANCO DE DADOS
+  useEffect(() => {
+    const buscarDadosDoBanco = async () => {
+      try {
+        const response = await api.get('/users/me/');
+        const dados = response.data;
+        
+        if (dados.email) setEmailUsuario(dados.email);
+        if (dados.first_name || dados.username) setNomeUsuario(dados.first_name || dados.username);
+        if (dados.foto_perfil) setFotoPreview(dados.foto_perfil);
+        
+        localStorage.setItem('user_email', dados.email);
+        localStorage.setItem('user_name', dados.first_name || dados.username);
+        if (dados.foto_perfil) localStorage.setItem('user_foto', dados.foto_perfil);
+
+      } catch (error) {
+        console.error("Erro ao buscar dados do usuário:", error);
+      }
+    };
+    
+    buscarDadosDoBanco();
+  }, []);
+
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setFotoFile(file);
-      // Cria uma URL temporária para mostrar o preview imediatamente na tela
       setFotoPreview(URL.createObjectURL(file));
     }
   };
@@ -33,26 +55,24 @@ export default function PerfilUsuario() {
     setLoading(true);
     setSucesso(false);
 
-    // O FormData é obrigatório quando enviamos arquivos (imagens) pro backend
     const formData = new FormData();
     if (dataNascimento) formData.append('data_nascimento', dataNascimento);
     if (fotoFile) formData.append('foto_perfil', fotoFile);
 
     try {
-      // Ajuste a rota '/users/me/' de acordo com a sua API no Django
       const response = await api.patch('/users/me/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      // Se retornou a nova URL da foto, atualiza no localStorage
       if (response.data.foto_perfil) {
         localStorage.setItem('user_foto', response.data.foto_perfil);
+        setFotoPreview(response.data.foto_perfil);
       }
       
       setSucesso(true);
-      setTimeout(() => setSucesso(false), 3000); // Esconde a mensagem de sucesso após 3s
+      setTimeout(() => setSucesso(false), 3000); 
     } catch (error) {
       console.error("Erro ao salvar dados:", error);
       alert("Houve um erro ao atualizar o perfil.");
@@ -63,20 +83,19 @@ export default function PerfilUsuario() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <h2 style={styles.title}>Minha Conta</h2>
+      <div className="header" style={styles.header}>
+        <h2 className="page-title" style={styles.title}>Minha Conta</h2>
         <p style={styles.subtitle}>Gerencie suas informações pessoais, foto e configurações de acesso.</p>
       </div>
 
-      <div style={styles.grid}>
+      <div className="grid-mobile" style={styles.grid}>
         {/* COLUNA ESQUERDA: DADOS PESSOAIS */}
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>Dados Pessoais</h3>
           
           <form onSubmit={handleSalvar} style={styles.form}>
             
-            {/* COMPONENTE DE FOTO DE PERFIL */}
-            <div style={styles.avatarContainer}>
+            <div className="header" style={styles.avatarContainer}>
               <div 
                 style={styles.avatarWrapper} 
                 onClick={() => fileInputRef.current.click()}
@@ -89,7 +108,6 @@ export default function PerfilUsuario() {
                   </div>
                 )}
                 
-                {/* Overlay Escuro com Ícone de Câmera */}
                 <div style={styles.avatarOverlay}>
                   <Camera size={24} color="#FDFBF7" />
                 </div>
@@ -99,7 +117,6 @@ export default function PerfilUsuario() {
                 <p style={styles.avatarSubtitle}>Clique na imagem para alterar. Use formatos JPG ou PNG.</p>
               </div>
               
-              {/* Input oculto que o React aciona pelo useRef */}
               <input 
                 type="file" 
                 accept="image/png, image/jpeg" 
@@ -109,7 +126,6 @@ export default function PerfilUsuario() {
               />
             </div>
             
-            {/* NOME (TRAVADO) */}
             <div style={styles.inputGroup}>
               <label style={styles.label}>Nome Completo</label>
               <div style={styles.inputWrapperDisabled}>
@@ -124,7 +140,6 @@ export default function PerfilUsuario() {
               </div>
             </div>
 
-            {/* E-MAIL (TRAVADO) */}
             <div style={styles.inputGroup}>
               <label style={styles.label}>Endereço de E-mail</label>
               <div style={styles.inputWrapperDisabled}>
@@ -139,9 +154,8 @@ export default function PerfilUsuario() {
               </div>
             </div>
 
-            {/* DATA DE NASCIMENTO (EDITÁVEL) */}
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Data de Nascimento (Importante para alinhamento astrológico)</label>
+              <label style={styles.label}>Data de Nascimento</label>
               <div style={styles.inputWrapper}>
                 <Calendar size={16} color="#A89C92" style={styles.inputIcon} />
                 <input 
@@ -170,7 +184,6 @@ export default function PerfilUsuario() {
         {/* COLUNA DIREITA: PLANOS E SEGURANÇA */}
         <div style={styles.columnRight}>
           
-          {/* PLANO ATUAL */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Plano Atual</h3>
             
@@ -182,12 +195,11 @@ export default function PerfilUsuario() {
               </p>
             </div>
 
-            <button style={styles.btnUpgrade}>
+            <button onClick={() => navigate("/planos")} style={styles.btnUpgrade}>
               <Shield size={16} /> Conhecer Círculo Premium
             </button>
           </div>
 
-          {/* SEGURANÇA */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Segurança</h3>
             <p style={{ color: "#A89C92", fontSize: "13px", marginBottom: "20px", lineHeight: "1.5" }}>
@@ -215,7 +227,6 @@ const styles = {
   cardTitle: { color: "#FDFBF7", fontSize: "18px", fontFamily: "'Playfair Display', serif", marginBottom: "24px" },
   form: { display: "flex", flexDirection: "column", gap: "24px" },
   
-  // ESTILOS NOVOS DO AVATAR
   avatarContainer: { display: "flex", alignItems: "center", gap: "20px", paddingBottom: "20px", borderBottom: "1px solid #2A2420" },
   avatarWrapper: { position: "relative", width: "80px", height: "80px", borderRadius: "50%", cursor: "pointer", overflow: "hidden", border: "2px solid #3A322C", backgroundColor: "#110F0E" },
   avatarImage: { width: "100%", height: "100%", objectFit: "cover" },

@@ -13,17 +13,15 @@ import FinancasTarologo from "./FinancasTarologo";
 export default function PainelTarologo() {
   const navigate = useNavigate();
   
-  // SALVA A ABA NO NAVEGADOR PARA SOBREVIVER AO F5
   const [abaAtiva, setAbaAtiva] = useState(localStorage.getItem('aba_ativa_tarologo') || "Fila Expressa");
   
   const [nomeUsuario] = useState(localStorage.getItem('user_name') || 'Guia');
   const [emailUsuario] = useState(localStorage.getItem('user_email') || 'oraculo@arcanum.com');
   const [iniciais] = useState(nomeUsuario.substring(0, 2).toUpperCase());
 
-  // ESTADOS DA FOTO E PLANO
   const [fotoFile, setFotoFile] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(localStorage.getItem('user_foto') || null);
-  const [nomePlano, setNomePlano] = useState("Iniciado"); // Padrão
+  const [nomePlano, setNomePlano] = useState("Iniciado"); 
   const fileInputRef = useRef(null);
 
   const [estatisticas, setEstatisticas] = useState({ saldo: "0,00", tiragens: 0, consulentes: 0, nota: 5.0 });
@@ -37,13 +35,11 @@ export default function PainelTarologo() {
     localStorage.setItem('aba_ativa_tarologo', aba);
   };
 
-  // 1. CARREGA DADOS DO PERFIL APENAS UMA VEZ
   useEffect(() => {
     const buscarDadosFixos = async () => {
       try {
         const resPerfil = await api.get('users/me/');
         
-        // Pega o nome do plano da API (Ex: Guia PRO)
         if (resPerfil.data.nome_plano_atual) {
             setNomePlano(resPerfil.data.nome_plano_atual);
         }
@@ -77,7 +73,6 @@ export default function PainelTarologo() {
     buscarDadosFixos();
   }, []);
 
-  // 2. BUSCA A FILA EXPRESSA AUTOMATICAMENTE A CADA 5 SEGUNDOS
   useEffect(() => {
     const buscarFila = async () => {
       try {
@@ -89,13 +84,8 @@ export default function PainelTarologo() {
       }
     };
 
-    // Busca imediatamente ao abrir a tela
     buscarFila();
-
-    // Cria um relógio rodando a cada 5000 milissegundos (5 segundos)
     const intervaloAtualizacao = setInterval(buscarFila, 5000);
-
-    // Limpa o relógio se o usuário sair do painel
     return () => clearInterval(intervaloAtualizacao);
   }, []);
 
@@ -164,9 +154,9 @@ export default function PainelTarologo() {
   };
 
   return (
-    <div style={styles.appContainer}>
+    <div className="app-container" style={styles.appContainer}>
       
-      <aside style={styles.sidebar}>
+      <aside className="sidebar" style={styles.sidebar}>
         <div style={styles.logoContainer}>
           <Moon size={28} color="#D4AF37" />
           <h2 style={styles.logoText}>Arkanum Pro</h2>
@@ -189,7 +179,6 @@ export default function PainelTarologo() {
           </div>
         </nav>
 
-        {/* CARD DE ASSINATURA NA SIDEBAR DO TARÓLOGO */}
         <div style={{ marginTop: "auto" }}>
           <div style={styles.planCard}>
             <div style={styles.planHeader}>
@@ -205,12 +194,12 @@ export default function PainelTarologo() {
 
       </aside>
 
-      <main style={{ ...styles.mainContent, padding: abaAtiva === "Sessões Ativas" ? "0" : "40px 60px" }}>
+      <main className="main-content" style={{ ...styles.mainContent, padding: abaAtiva === "Sessões Ativas" ? "0" : "40px 60px" }}>
         
         {abaAtiva !== "Sessões Ativas" && (
-          <header style={styles.header}>
-            <h1 style={styles.pageTitle}>{abaAtiva}</h1>
-            <div style={styles.headerActions}>
+          <header className="header" style={styles.header}>
+            <h1 className="page-title" style={styles.pageTitle}>{abaAtiva}</h1>
+            <div className="header-actions" style={styles.headerActions}>
               <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
               <button style={styles.userProfileBtn}>
                 <div style={styles.userAvatar}>{iniciais}</div>
@@ -221,10 +210,9 @@ export default function PainelTarologo() {
           </header>
         )}
 
-        {/* FILA EXPRESSA */}
         {abaAtiva === "Fila Expressa" && (
           <div style={styles.sectionContainer}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <p style={{ color: '#A89C92', fontSize: '15px' }}>
                 Atendimentos aguardando um oraculista disponível. Aceite para iniciar o chat.
               </p>
@@ -243,7 +231,7 @@ export default function PainelTarologo() {
                  <p style={{color: '#A89C92'}}>Nenhum pedido na fila expressa no momento.<br/>O universo está tranquilo.</p>
                </div>
             ) : (
-              <div style={styles.filaGrid}>
+              <div className="grid-mobile" style={styles.filaGrid}>
                 {filaExpressa.map((pedido) => (
                   <div key={pedido.id} style={styles.pedidoCard}>
                     
@@ -289,26 +277,17 @@ export default function PainelTarologo() {
           </div>
         )}
 
-        {/* SESSÕES ATIVAS */}
         {abaAtiva === "Sessões Ativas" && (
           <div style={{ height: '100vh', width: '100%', overflow: 'hidden' }}>
               <Mensagens customStyle={{ margin: 0, height: '100vh', borderTop: 'none' }} />
           </div>
         )}
 
-        {/* MINHA AGENDA */}
-        {abaAtiva === "Minha Agenda" && (
-          <AgendaTarologo />
-        )}
+        {abaAtiva === "Minha Agenda" && <AgendaTarologo />}
+        {abaAtiva === "Finanças" && <FinancasTarologo estatisticas={estatisticas} />}
 
-        {/* FINANÇAS */}
-        {abaAtiva === "Finanças" && (
-          <FinancasTarologo estatisticas={estatisticas} />
-        )}
-
-        {/* MEU PERFIL */}
         {abaAtiva === "Meu Perfil" && (
-          <div style={styles.profileContainer}>
+          <div className="grid-mobile" style={styles.profileContainer}>
             <div style={styles.cardSettings}>
               
               <h3 style={styles.sectionTitle}>Dados de Acesso</h3>
@@ -338,7 +317,7 @@ export default function PainelTarologo() {
               
               <form onSubmit={handleAtualizarVitrine} style={styles.form}>
                 
-                <div style={styles.avatarContainer}>
+                <div className="header" style={styles.avatarContainer}>
                   <div style={styles.avatarWrapper} onClick={() => fileInputRef.current.click()}>
                     {fotoPreview ? (
                       <img src={fotoPreview} alt="Sua foto de perfil" style={styles.avatarImage} />
@@ -405,7 +384,6 @@ const NavItem = ({ icon, label, ativo, onClick }) => (
   </div>
 );
 
-// ESTILOS COMPLETO
 const styles = {
   appContainer: { display: "flex", height: "100vh", backgroundColor: "#110F0E", fontFamily: "'Inter', sans-serif" },
   sidebar: { display: "flex", flexDirection: "column", width: "260px", backgroundColor: "#151312", borderRight: "1px solid #2A2420", padding: "32px 20px" },
@@ -449,13 +427,12 @@ const styles = {
   pedidoContexto: { color: "#A89C92", fontSize: "13px", lineHeight: "1.6", wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', margin: 0 },
   btnAceitar: { width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "14px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", transition: "opacity 0.2s" },
 
-  profileContainer: { maxWidth: "600px" },
+  profileContainer: { maxWidth: "600px", margin: "0 auto" },
   cardSettings: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px" },
   form: { display: "flex", flexDirection: "column", gap: "24px" },
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
   label: { color: "#A89C92", fontSize: "13px", fontWeight: "500" },
   
-  // ESTILOS DO AVATAR NO TARÓLOGO
   avatarContainer: { display: "flex", alignItems: "center", gap: "20px", paddingBottom: "20px" },
   avatarWrapper: { position: "relative", width: "80px", height: "80px", borderRadius: "50%", cursor: "pointer", overflow: "hidden", border: "2px solid #3A322C", backgroundColor: "#110F0E" },
   avatarImage: { width: "100%", height: "100%", objectFit: "cover" },
@@ -472,7 +449,6 @@ const styles = {
   textarea: { width: "100%", height: "120px", padding: "14px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", resize: "none", boxSizing: "border-box" },
   btnSalvar: { padding: "14px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", marginTop: "8px" },
 
-  // ESTILOS DO CARD DE PLANO NA SIDEBAR
   planCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "8px", padding: "16px" },
   planHeader: { display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" },
   planTitle: { color: "#FDFBF7", fontSize: "14px", fontWeight: "600" },
