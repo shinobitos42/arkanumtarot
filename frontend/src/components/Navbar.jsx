@@ -1,16 +1,16 @@
 import { Link } from 'react-router-dom';
-import { Moon } from 'lucide-react'; // <-- Importamos a Lua aqui!
+import { Moon } from 'lucide-react';
 
 export default function Navbar() {
   return (
-    <nav style={styles.nav}>
+    // Adicionamos a classe 'nav-mobile' para facilitar o controle pelo mobile.css
+    <nav className="nav-mobile" style={styles.nav}>
       <div style={styles.logoBox}>
-        {/* A Lua dourada inserida aqui */}
         <Moon size={24} color="#D4AF37" style={{ marginRight: '8px' }} />
         <h3 style={styles.logoText}>Arkanum</h3>
       </div>
       
-      <div style={styles.linkBox}>
+      <div className="grid-mobile" style={styles.linkBox}>
         <Link to="/" style={styles.link}>O Espaço</Link>
         <Link to="/login" style={styles.link}>Tarólogos</Link>
       </div>
