@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async'; // <-- IMPORTAÇÃO NECESSÁRIA
+import './mobile.css';
 
 // Importação das Páginas
 import Home from './pages/Home';

@@ -80,7 +80,7 @@ const DashboardTarot = () => {
   };
 
   return (
-    <div style={styles.appContainer}>
+    <div className="app-container" style={styles.appContainer}>
       
       <aside style={styles.sidebar}>
         <div style={styles.logoContainer}>

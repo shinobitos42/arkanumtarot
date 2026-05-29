@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     RegisterView, TarologoListView, CustomTokenObtainPairView, 
     UserMeView, AgendaUpdateView, ExtratoView, SolicitarSaqueView,
-    CriarCheckoutAssinaturaView, MercadoPagoWebhookView # <--- WEBHOOK IMPORTADO AQUI
+    ProcessarPagamentoBrickView, MercadoPagoWebhookView # <--- IMPORTAÇÕES ATUALIZADAS
 )
 
 urlpatterns = [
@@ -21,8 +21,8 @@ urlpatterns = [
     path('me/extrato/', ExtratoView.as_view(), name='user_extrato'),
     path('me/saque/', SolicitarSaqueView.as_view(), name='user_saque'),
     
-    # Rota de Pagamento (Criar link do checkout)
-    path('planos/checkout/', CriarCheckoutAssinaturaView.as_view(), name='plano_checkout'),
+    # Rota de Pagamento Transparente (Bricks)
+    path('planos/pagar-brick/', ProcessarPagamentoBrickView.as_view(), name='pagamento_brick'),
     
     # ROTA DO WEBHOOK (Totalmente Pública - O Mercado Pago vai bater aqui)
     path('webhook/mercadopago/', MercadoPagoWebhookView.as_view(), name='webhook_mercadopago'),

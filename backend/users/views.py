@@ -103,7 +103,7 @@ class UserMeView(generics.RetrieveUpdateAPIView):
 class AgendaUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @transaction.atomic # Garante que ou salva tudo, ou cancela tudo em caso de erro
+    @transaction.atomic 
     def post(self, request):
         user = request.user
         if user.role != 'TAROLOGO':
@@ -214,70 +214,74 @@ class SolicitarSaqueView(APIView):
 
 
 # ==========================================
-# VIEW PARA CRIAR O CHECKOUT DO PLANO (MERCADO PAGO)
+# VIEW DE PAGAMENTO TRANSPARENTE (BRICKS)
 # ==========================================
-class CriarCheckoutAssinaturaView(APIView):
+class ProcessarPagamentoBrickView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
         user = request.user
         plano_escolhido = request.data.get('plano')
+        pagamento_dados = request.data.get('pagamento_dados', {})
         
-        # 1. Configurar valores baseados nos 4 novos planos
+        if not plano_escolhido or not pagamento_dados:
+            return Response({"error": "Dados de pagamento incompletos."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 1. Configurar e validar valores baseados nos 4 novos planos do backend
         if plano_escolhido == 'ESSENCIAL_CONSULENTE':
-            titulo = "Arkanum - Jornada Essencial (Mensal)"
-            valor = 19.90
+            titulo = "Arkanum - Jornada Essencial"
+            valor_esperado = 19.90
         elif plano_escolhido == 'CIRCULO_ARCANO_CONSULENTE':
-            titulo = "Arkanum - Círculo Arcano (Mensal)"
-            valor = 39.90
+            titulo = "Arkanum - Círculo Arcano"
+            valor_esperado = 39.90
         elif plano_escolhido == 'PRO_TAROLOGO':
-            titulo = "Arkanum - Guia PRO (Mensal)"
-            valor = 39.90
+            titulo = "Arkanum - Guia PRO"
+            valor_esperado = 39.90
         elif plano_escolhido == 'MESTRE_TAROLOGO':
-            titulo = "Arkanum - Mestre Arcano (Mensal)"
-            valor = 69.90
+            titulo = "Arkanum - Mestre Arcano"
+            valor_esperado = 69.90
         else:
             return Response({"error": "Plano inválido."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 2. Iniciar a SDK do Mercado Pago
-        # A chave deve estar configurada no arquivo settings.py (MERCADOPAGO_ACCESS_TOKEN = 'sua_chave_aqui')
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
 
-        # Configura as URLs de retorno de acordo com o tipo de usuário
-        url_sucesso = "https://www.arkanumtarot.com.br/painel-tarologo" if user.role == 'TAROLOGO' else "https://www.arkanumtarot.com.br/painel"
+        # 3. Injeta a referência e ajusta valores de segurança no payload recebido do frontend
+        pagamento_dados["description"] = titulo
+        pagamento_dados["transaction_amount"] = float(valor_esperado) # Impede injeção de valor falso
+        pagamento_dados["external_reference"] = f"assinatura_user_{user.id}_{plano_escolhido}" 
+        
+        # Garante que o payer tenha o e-mail exato do usuário logado (evita fraudes de terceiros)
+        if "payer" not in pagamento_dados:
+            pagamento_dados["payer"] = {}
+        pagamento_dados["payer"]["email"] = user.email
 
-        # 3. Montar os dados da preferência
-        preference_data = {
-            "items": [
-                {
-                    "id": plano_escolhido,
-                    "title": titulo,
-                    "quantity": 1,
-                    "currency_id": "BRL",
-                    "unit_price": float(valor)
-                }
-            ],
-            "payer": {
-                "email": user.email,
-                "name": user.first_name
-            },
-            "back_urls": {
-                "success": url_sucesso,
-                "failure": "https://www.arkanumtarot.com.br/planos",
-                "pending": "https://www.arkanumtarot.com.br/planos"
-            },
-            "auto_return": "approved",
-            # A referência externa é essencial para identificarmos o pagamento no Webhook depois
-            "external_reference": f"assinatura_user_{user.id}_{plano_escolhido}" 
-        }
+        try:
+            # 4. Enviar a cobrança real para a API do MP
+            payment_response = sdk.payment().create(pagamento_dados)
+            payment = payment_response["response"]
+            
+            status_pagamento = payment.get("status")
+            
+            # 5. Se o pagamento foi por cartão de crédito e já deu aprovado, já ativamos na hora!
+            if status_pagamento == "approved":
+                assinatura, created = Assinatura.objects.get_or_create(user=user)
+                assinatura.plano = plano_escolhido
+                assinatura.ativo = True
+                assinatura.data_expiracao = now() + timedelta(days=30)
+                assinatura.pagamento_id = str(payment.get("id"))
+                assinatura.save()
 
-        # 4. Enviar para o Mercado Pago e pegar o link de pagamento
-        preference_response = sdk.preference().create(preference_data)
-        url_checkout = preference_response["response"]["init_point"]
+            return Response({
+                "status": status_pagamento,
+                "status_detail": payment.get("status_detail"),
+                "id": payment.get("id")
+            }, status=status.HTTP_200_OK)
 
-        return Response({
-            "checkout_url": url_checkout
-        }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Erro no Pagamento Brick:", e)
+            return Response({"error": "Houve um problema ao processar seu pagamento. Tente novamente."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ==========================================

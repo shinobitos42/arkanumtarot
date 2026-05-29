@@ -1,0 +1,55 @@
+/* ==========================================
+   ARQUIVO GLOBAL DE CORREÇÃO MOBILE
+================================================= */
+
+@media (max-width: 768px) {
+  /* 1. Transforma tudo que estava lado a lado em coluna (uma coisa embaixo da outra) */
+  .app-container {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
+  /* 2. Arruma o Menu Lateral (Sidebar) para ficar no topo ou adaptar o tamanho */
+  .sidebar {
+    width: 100% !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid #2A2420 !important;
+    padding: 20px !important;
+  }
+
+  /* 3. Dá respiro para o conteúdo principal */
+  .main-content {
+    padding: 20px !important;
+  }
+
+  /* 4. As Grids (Onde os cards se juntam) */
+  .grid-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  /* 5. Cabeçalhos e Buscas (Não deixa quebrar a tela) */
+  .header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 20px !important;
+  }
+
+  .header-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .search-container {
+    width: 100% !important;
+  }
+
+  /* 6. Textos muito grandes */
+  .page-title {
+    fontSize: 24px !important;
+  }
+}

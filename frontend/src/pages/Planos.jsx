@@ -1,19 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Star, Crown, Shield, Zap, Sparkles, Loader2, ArrowLeft } from "lucide-react";
-import api from "../services/api";
+import { Check, Star, Crown, Shield, Zap, Sparkles, ArrowLeft } from "lucide-react";
+
+// Importe o seu componente de checkout transparente! 
+// Ajuste o caminho '../components/' dependendo de onde você o salvou.
+import CheckoutArkanum from "../components/CheckoutArkanum"; 
 
 export default function Planos() {
   const navigate = useNavigate();
-  const [role, setRole] = useState(localStorage.getItem("user_role") || "CONSULENTE");
-  const [processando, setProcessando] = useState(null);
+  const [role] = useState(localStorage.getItem("user_role") || "CONSULENTE");
+  
+  // Estado mágico: se estiver nulo, mostra os cards. Se tiver um plano, mostra o Checkout!
+  const [planoEmCheckout, setPlanoEmCheckout] = useState(null);
 
-  // Define os planos baseados no tipo de usuário
+  // Define os planos baseados no tipo de usuário (Agora com valor numérico para a API)
   const planosConsulente = [
     {
       id: "GRATIS",
       nome: "Poeira Estelar",
       preco: "Grátis",
+      valorNumerico: 0,
       icone: <Star size={24} color="#A89C92" />,
       destaque: false,
       beneficios: [
@@ -28,6 +34,7 @@ export default function Planos() {
       id: "ESSENCIAL_CONSULENTE",
       nome: "Jornada Essencial",
       preco: "R$ 19,90",
+      valorNumerico: 19.90,
       mes: "/mês",
       icone: <Shield size={24} color="#D4AF37" />,
       destaque: false,
@@ -44,6 +51,7 @@ export default function Planos() {
       id: "CIRCULO_ARCANO_CONSULENTE",
       nome: "Círculo Arcano",
       preco: "R$ 39,90",
+      valorNumerico: 39.90,
       mes: "/mês",
       icone: <Crown size={24} color="#110F0E" />,
       destaque: true,
@@ -64,6 +72,7 @@ export default function Planos() {
       id: "GRATIS",
       nome: "Iniciado",
       preco: "Grátis",
+      valorNumerico: 0,
       icone: <Star size={24} color="#A89C92" />,
       destaque: false,
       beneficios: [
@@ -79,6 +88,7 @@ export default function Planos() {
       id: "PRO_TAROLOGO",
       nome: "Guia PRO",
       preco: "R$ 39,90",
+      valorNumerico: 39.90,
       mes: "/mês",
       icone: <Zap size={24} color="#D4AF37" />,
       destaque: false,
@@ -95,6 +105,7 @@ export default function Planos() {
       id: "MESTRE_TAROLOGO",
       nome: "Mestre Arcano",
       preco: "R$ 69,90",
+      valorNumerico: 69.90,
       mes: "/mês",
       icone: <Sparkles size={24} color="#110F0E" />,
       destaque: true,
@@ -112,94 +123,114 @@ export default function Planos() {
 
   const planosParaExibir = role === "TAROLOGO" ? planosTarologo : planosConsulente;
 
-  const handleAssinar = async (planoId) => {
-    setProcessando(planoId);
-    try {
-      const response = await api.post("users/planos/checkout/", { plano: planoId });
-      if (response.data.checkout_url) {
-        // Redireciona para o Mercado Pago
-        window.location.href = response.data.checkout_url;
-      }
-    } catch (error) {
-      console.error("Erro ao gerar checkout:", error);
-      alert("Houve um erro ao processar seu pagamento. Tente novamente.");
-      setProcessando(null);
+  // Direciona o usuário para o painel correto assim que o cartão aprovar
+  const handlePagamentoSucesso = () => {
+    if (role === 'TAROLOGO') {
+      navigate('/painel-tarologo');
+    } else {
+      navigate('/dashboard');
     }
   };
 
   return (
-    <div style={styles.container}>
-      <button style={styles.btnVoltar} onClick={() => navigate(-1)}>
-        <ArrowLeft size={20} /> Voltar
-      </button>
-
-      <div style={styles.header}>
-        <h1 style={styles.title}>
-          {role === "TAROLOGO" ? "Evolua sua Jornada Profissional" : "Aprofunde seu Autoconhecimento"}
-        </h1>
-        <p style={styles.subtitle}>
-          Escolha o plano ideal para as suas necessidades e tenha acesso a ferramentas exclusivas do Arkanum.
-        </p>
-      </div>
-
-      <div style={styles.gridPlanos}>
-        {planosParaExibir.map((plano) => (
-          <div 
-            key={plano.id} 
-            style={{ 
-              ...styles.cardPlano, 
-              ...(plano.destaque ? styles.cardDestaque : {}) 
-            }}
-          >
-            {plano.destaque && (
-              <div style={styles.tagRecomendado}>Recomendado</div>
-            )}
-            
-            <div style={{...styles.iconWrapper, backgroundColor: plano.destaque ? "#D4AF37" : "#1A1715"}}>
-              {plano.icone}
-            </div>
-            
-            <h3 style={{...styles.planoNome, color: plano.destaque ? "#D4AF37" : "#FDFBF7"}}>
-              {plano.nome}
-            </h3>
-            
-            <div style={styles.precoContainer}>
-              <span style={{...styles.planoPreco, color: plano.destaque ? "#FDFBF7" : "#EAE0C8"}}>
-                {plano.preco}
-              </span>
-              {plano.mes && <span style={styles.planoMes}>{plano.mes}</span>}
-            </div>
-
-            <ul style={styles.listaBeneficios}>
-              {plano.beneficios.map((beneficio, index) => (
-                <li key={index} style={styles.beneficioItem}>
-                  <Check size={18} color={plano.destaque ? "#D4AF37" : "#786C63"} style={{ flexShrink: 0 }} />
-                  <span style={styles.beneficioTexto}>{beneficio}</span>
-                </li>
-              ))}
-            </ul>
-
-            <button 
-              onClick={() => handleAssinar(plano.id)}
-              disabled={plano.disabled || processando !== null}
-              style={{
-                ...styles.btnAssinar,
-                backgroundColor: plano.disabled ? "#1A1715" : (plano.destaque ? "#D4AF37" : "#2A2420"),
-                color: plano.disabled ? "#786C63" : (plano.destaque ? "#110F0E" : "#FDFBF7"),
-                cursor: (plano.disabled || processando !== null) ? "not-allowed" : "pointer"
-              }}
-            >
-              {processando === plano.id ? (
-                <span style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
-                  <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Processando...
-                </span>
-              ) : (
-                plano.botao
-              )}
-            </button>
+    <div className="app-container" style={styles.container}>
+      
+      {planoEmCheckout ? (
+        // ==========================================
+        // TELA DE CHECKOUT (MERCADO PAGO BRICKS)
+        // ==========================================
+        <div style={styles.checkoutViewWrapper}>
+          <button style={styles.btnVoltarAbsoluto} onClick={() => setPlanoEmCheckout(null)}>
+            <ArrowLeft size={20} /> Mudar de Plano
+          </button>
+          
+          <div style={styles.header}>
+            <h1 className="page-title" style={styles.title}>Finalizar Assinatura</h1>
+            <p style={styles.subtitle}>
+              Você está prestes a entrar no plano <strong style={{color: '#D4AF37'}}>{planoEmCheckout.nome}</strong>.
+            </p>
           </div>
-        ))}
-      </div>
+
+          {/* Nosso componente mágico injetando a tela de cartão/pix no meio do site */}
+          <CheckoutArkanum 
+            valorBase={planoEmCheckout.valorNumerico} 
+            planoEscolhido={planoEmCheckout.id} 
+            onPagamentoSucesso={handlePagamentoSucesso} 
+          />
+        </div>
+      ) : (
+        // ==========================================
+        // TELA DE SELEÇÃO DE PLANOS (CARDS)
+        // ==========================================
+        <>
+          <button style={styles.btnVoltarAbsoluto} onClick={() => navigate(-1)}>
+            <ArrowLeft size={20} /> Voltar ao Painel
+          </button>
+
+          <div className="header" style={styles.header}>
+            <h1 className="page-title" style={styles.title}>
+              {role === "TAROLOGO" ? "Evolua sua Jornada Profissional" : "Aprofunde seu Autoconhecimento"}
+            </h1>
+            <p style={styles.subtitle}>
+              Escolha o plano ideal para as suas necessidades e tenha acesso a ferramentas exclusivas do Arkanum.
+            </p>
+          </div>
+
+          <div className="grid-mobile" style={styles.gridPlanos}>
+            {planosParaExibir.map((plano) => (
+              <div 
+                key={plano.id} 
+                style={{ 
+                  ...styles.cardPlano, 
+                  ...(plano.destaque ? styles.cardDestaque : {}) 
+                }}
+              >
+                {plano.destaque && (
+                  <div style={styles.tagRecomendado}>Recomendado</div>
+                )}
+                
+                <div style={{...styles.iconWrapper, backgroundColor: plano.destaque ? "#D4AF37" : "#1A1715"}}>
+                  {plano.icone}
+                </div>
+                
+                <h3 style={{...styles.planoNome, color: plano.destaque ? "#D4AF37" : "#FDFBF7"}}>
+                  {plano.nome}
+                </h3>
+                
+                <div style={styles.precoContainer}>
+                  <span style={{...styles.planoPreco, color: plano.destaque ? "#FDFBF7" : "#EAE0C8"}}>
+                    {plano.preco}
+                  </span>
+                  {plano.mes && <span style={styles.planoMes}>{plano.mes}</span>}
+                </div>
+
+                <ul style={styles.listaBeneficios}>
+                  {plano.beneficios.map((beneficio, index) => (
+                    <li key={index} style={styles.beneficioItem}>
+                      <Check size={18} color={plano.destaque ? "#D4AF37" : "#786C63"} style={{ flexShrink: 0 }} />
+                      <span style={styles.beneficioTexto}>{beneficio}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Ao clicar, agora setamos o estado para abrir o checkout em vez de bater na API */}
+                <button 
+                  onClick={() => setPlanoEmCheckout(plano)}
+                  disabled={plano.disabled}
+                  style={{
+                    ...styles.btnAssinar,
+                    backgroundColor: plano.disabled ? "#1A1715" : (plano.destaque ? "#D4AF37" : "#2A2420"),
+                    color: plano.disabled ? "#786C63" : (plano.destaque ? "#110F0E" : "#FDFBF7"),
+                    cursor: plano.disabled ? "not-allowed" : "pointer"
+                  }}
+                >
+                  {plano.botao}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -207,12 +238,13 @@ export default function Planos() {
 // ESTILOS
 const styles = {
   container: { minHeight: "100vh", backgroundColor: "#110F0E", padding: "60px 20px", fontFamily: "'Inter', sans-serif", position: "relative" },
-  btnVoltar: { position: "absolute", top: "40px", left: "40px", display: "flex", alignItems: "center", gap: "8px", backgroundColor: "transparent", border: "none", color: "#A89C92", fontSize: "14px", cursor: "pointer", transition: "color 0.2s" },
+  checkoutViewWrapper: { display: "flex", flexDirection: "column", width: "100%", paddingBottom: "60px" },
+  btnVoltarAbsoluto: { position: "absolute", top: "40px", left: "40px", display: "flex", alignItems: "center", gap: "8px", backgroundColor: "transparent", border: "none", color: "#A89C92", fontSize: "14px", cursor: "pointer", transition: "color 0.2s", zIndex: 10 },
   header: { textAlign: "center", maxWidth: "600px", margin: "0 auto 60px" },
   title: { fontSize: "36px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", marginBottom: "16px", fontStyle: "italic" },
   subtitle: { fontSize: "16px", color: "#A89C92", lineHeight: "1.6" },
-  gridPlanos: { display: "flex", gap: "30px", justifyContent: "center", flexWrap: "wrap", maxWidth: "1200px", margin: "0 auto" },
   
+  gridPlanos: { display: "flex", gap: "30px", justifyContent: "center", flexWrap: "wrap", maxWidth: "1200px", margin: "0 auto" },
   cardPlano: { width: "100%", maxWidth: "340px", backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "20px", padding: "40px 30px", display: "flex", flexDirection: "column", position: "relative", transition: "transform 0.3s" },
   cardDestaque: { border: "2px solid #D4AF37", transform: "scale(1.05)", boxShadow: "0 20px 40px rgba(212, 175, 55, 0.1)", zIndex: 10, backgroundColor: "#151312" },
   tagRecomendado: { position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", backgroundColor: "#D4AF37", color: "#110F0E", padding: "6px 16px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px" },
