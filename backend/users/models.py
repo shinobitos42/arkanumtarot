@@ -52,6 +52,16 @@ class TarologoProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='tarologo_profile')
     especialidade = models.CharField(max_length=200, help_text="Ex: Tarot de Marselha & Astrologia")
     biografia = models.TextField(blank=True, null=True)
+    
+    # -------------------------------------------------------------------------
+    # ALTERAÇÃO AQUI: CAMPO ADICIONADO PARA O CARDÁPIO DE CONSULTAS DO GUIA
+    # -------------------------------------------------------------------------
+    tipos_tiragem = models.JSONField(
+        default=list, 
+        blank=True, 
+        help_text="Lista de tiragens personalizadas do tarólogo e seus respectivos valores."
+    )
+    
     valor_consulta = models.DecimalField(max_digits=10, decimal_places=2, default=35.00)
     saldo_disponivel = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     nota_media = models.DecimalField(max_digits=3, decimal_places=1, default=5.0)

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Zap, Upload, Image as ImageIcon, CheckCircle, Loader2, X, HeartPulse } from "lucide-react";
+import { Zap, Upload, Image as ImageIcon, CheckCircle, Loader2, X, HeartPulse, Sparkles, ChevronDown } from "lucide-react";
 import api from "../services/api";
-import ModalPagamento from "./ModalPagamento"; // <-- IMPORTAMOS O MODAL AQUI
+import ModalPagamento from "./ModalPagamento"; 
 
 export default function TiragemExpressa() {
   const [pergunta, setPergunta] = useState("");
@@ -11,9 +11,22 @@ export default function TiragemExpressa() {
   const [energia, setEnergia] = useState("");
   const [status, setStatus] = useState("idle"); 
 
+  // CONFIGURAÇÃO DOS NOVOS TIPOS DE LEITURA INTEGRADOS
+  const [tipoTiragem, setTipoTiragem] = useState("DETALHADA");
+  const [valorTiragem, setValorTiragem] = useState(35.00);
+
   // ESTADOS DO PAGAMENTO
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dadosPagamento, setDadosPagamento] = useState(null);
+
+  // Mapeia a mudança de valor dinamicamente ao selecionar o tipo de leitura
+  const handleTipoLeituraChange = (tipo) => {
+    setTipoTiragem(tipo);
+    if (tipo === "OBJETIVA") setValorTiragem(20.00);
+    else if (tipo === "DETALHADA") setValorTiragem(35.00);
+    else if (tipo === "AMOROSA") setValorTiragem(50.00);
+    else if (tipo === "COMPLETA") setValorTiragem(70.00);
+  };
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -39,30 +52,31 @@ export default function TiragemExpressa() {
     setStatus("submitting");
 
     const formData = new FormData();
-    formData.append("tipo", "EXPRESSA");
+    formData.append("tipo", tipoTiragem); // Envia o tipo dinâmico escolhido
     formData.append("status_sessao", "aguardando_guia");
     formData.append("pergunta_principal", pergunta);
     formData.append("contexto", `[Energia do Consulente: ${energia}]\n\n${contexto}`);
+    formData.append("valor_cobrado", valorTiragem); // Envia o valor correto para a validação do backend
     
     if (imagem) {
       formData.append("imagem_anexa", imagem);
     }
 
-    try {
+  	try {
       // 1. Cria a sessão no banco de dados
       const sessaoResponse = await api.post('tiragens/sessoes/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      // 2. Pede para o Django e Mercado Pago gerarem a cobrança dessa sessão
-      const pagamentoResponse = await api.post('assinaturas/checkout/', {
-        sessao_id: sessaoResponse.data.id
+      // 2. Dispara a cobrança na nossa nova rota de pagamentos transparente
+      const pagamentoResponse = await api.post('users/planos/pagar-brick/', {
+        sessao_id: sessaoResponse.data.id,
+        plano: tipoTiragem // O backend mapeará o fluxo de recebimento
       });
 
-      // 3. Salva o QR Code no estado e abre o Modal na tela
       setDadosPagamento(pagamentoResponse.data);
       setIsModalOpen(true);
-      setStatus("idle"); // Destrava o botão
+      setStatus("idle"); 
 
     } catch (error) {
       console.error("Erro ao processar tiragem ou pagamento:", error);
@@ -71,7 +85,6 @@ export default function TiragemExpressa() {
     }
   };
 
-  // Quando o consulente fechar o modal de pagamento, mostramos a tela de sucesso
   const handleFecharModal = () => {
     setIsModalOpen(false);
     setStatus("success");
@@ -110,9 +123,8 @@ export default function TiragemExpressa() {
   ];
 
   return (
-    <div style={styles.expressaContainer}>
+    <div className="grid-mobile" style={styles.expressaContainer}>
       
-      {/* O NOSSO MODAL DE PAGAMENTO FICA AQUI (Invisível até o isModalOpen virar true) */}
       <ModalPagamento 
         isOpen={isModalOpen} 
         onClose={handleFecharModal} 
@@ -123,7 +135,7 @@ export default function TiragemExpressa() {
         <div style={styles.expressaIconWrapper}>
           <Zap size={40} color="#D4AF37" />
         </div>
-        <h1 style={styles.pageTitle}>Tiragem Expressa</h1>
+        <h1 className="page-title" style={styles.pageTitle}>Tiragem Expressa</h1>
         <p style={styles.pageSubtitle}>
           Precisa de clareza imediata? Seu pedido será enviado para o Círculo de Guias e o primeiro oraculista disponível iniciará a sua leitura de forma prioritária.
         </p>
@@ -131,6 +143,30 @@ export default function TiragemExpressa() {
 
       <div style={styles.expressaCard}>
         <form onSubmit={handleSubmit} style={styles.expressaOptions}>
+          
+          <h3 style={styles.sectionTitle}>Ajustar Formato da Consulta</h3>
+          
+          {/* SELETOR DINÂMICO DE TIPO DE LEITURA */}
+          <div style={styles.formGroup}>
+            <label style={styles.expressaLabel}><Sparkles size={14} style={{display: 'inline', marginRight: '6px'}}/> Profundidade da Resposta</label>
+            <div style={styles.selectWrapper}>
+              <select 
+                value={tipoTiragem} 
+                onChange={(e) => handleTipoLeituraChange(e.target.value)} 
+                style={styles.customSelect}
+                disabled={status === "submitting"}
+              >
+                <option value="OBJETIVA">Tiragem Objetiva (Sim ou Não / Direta) - R$ 20,00</option>
+                <option value="DETALHADA">Tiragem Detalhada (Análise de Cenário) - R$ 35,00</option>
+                <option value="AMOROSA">Tiragem Conexão Amorosa (Sinastria de Almas) - R$ 50,00</option>
+                <option value="COMPLETA">Tiragem Mandala Completa (Geral/Futuro) - R$ 70,00</option>
+              </select>
+              <ChevronDown size={14} color="#A89C92" style={styles.selectIcon} />
+            </div>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '8px 0' }} />
+
           <h3 style={styles.sectionTitle}>Detalhes da sua Questão</h3>
           
           <div style={styles.formGroup}>
@@ -163,7 +199,7 @@ export default function TiragemExpressa() {
               <HeartPulse size={14} color="#D4AF37" />
               Como você está se sentindo em relação a isso?
             </label>
-            <div style={styles.energiaGrid}>
+            <div className="grid-mobile" style={styles.energiaGrid}>
               {opcoesEnergia.map((op) => (
                 <div 
                   key={op.id}
@@ -218,7 +254,7 @@ export default function TiragemExpressa() {
           <div style={styles.expressaPriceBox}>
             <div>
               <p style={styles.priceLabel}>Troca Energética Fixa</p>
-              <p style={styles.priceValue}>R$ 35,00</p>
+              <p style={styles.priceValue}>R$ {valorTiragem.toFixed(2).replace('.', ',')}</p>
             </div>
             
             <button 
@@ -233,7 +269,7 @@ export default function TiragemExpressa() {
               {status === "submitting" ? (
                 <>
                   <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> 
-                  Gerando Cobrança...
+                  Conectando Círculo...
                 </>
               ) : (
                 <>
@@ -249,21 +285,25 @@ export default function TiragemExpressa() {
 }
 
 const styles = {
-  expressaContainer: { display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 0" },
-  expressaHeader: { display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "40px", textAlign: "center" },
-  expressaIconWrapper: { width: "80px", height: "80px", borderRadius: "50%", backgroundColor: "rgba(212, 175, 55, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "24px" },
+  expressaContainer: { display: "flex", flexDirection: "column", alignItems: "center", padding: "0 0 40px 0" },
+  expressaHeader: { display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "32px", textAlign: "center" },
+  expressaIconWrapper: { width: "80px", height: "80px", borderRadius: "50%", backgroundColor: "rgba(212, 175, 55, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" },
   pageTitle: { fontSize: "32px", fontWeight: "normal", color: "#FDFBF7", marginBottom: "12px", fontFamily: "'Playfair Display', serif", fontStyle: "italic" },
   pageSubtitle: { color: "#A89C92", fontSize: "15px", maxWidth: "600px", lineHeight: "1.6", fontWeight: "300" },
-  expressaCard: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", width: "100%", maxWidth: "600px", padding: "40px", boxSizing: "border-box" },
+  expressaCard: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", width: "100%", maxWidth: "600px", padding: "32px", boxSizing: "border-box" },
   expressaOptions: { display: "flex", flexDirection: "column", gap: "24px" },
-  sectionTitle: { color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontSize: "20px", marginBottom: "4px" },
+  sectionTitle: { color: "#FDFBF7", fontSize: "18px", fontFamily: "'Playfair Display', serif", marginBottom: "4px" },
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
-  expressaLabel: { color: "#A89C92", fontSize: "13px", fontWeight: "500" },
+  expressaLabel: { color: "#A89C92", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" },
   expressaInput: { width: "100%", padding: "14px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "6px", color: "#EAE0C8", fontSize: "14px", fontFamily: "'Inter', sans-serif", outline: "none", boxSizing: "border-box" },
   expressaTextarea: { width: "100%", height: "120px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "6px", padding: "16px", color: "#EAE0C8", fontSize: "14px", fontFamily: "'Inter', sans-serif", outline: "none", resize: "none", boxSizing: "border-box" },
   
+  selectWrapper: { position: "relative", display: "flex", alignItems: "center" },
+  customSelect: { width: "100%", padding: "14px 36px 14px 16px", backgroundColor: "#110F0E", border: "1px solid #3A322C", color: "#EAE0C8", borderRadius: "6px", fontSize: "14px", fontFamily: "'Inter', sans-serif", outline: "none", appearance: "none", cursor: "pointer" },
+  selectIcon: { position: "absolute", right: "14px", pointerEvents: "none" },
+
   energiaGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" },
-  energiaCard: { display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", border: "1px solid", borderRadius: "6px", cursor: "pointer", transition: "all 0.2s" },
+  energiaCard: { display: "flex", alignItems: "center", gap: "10px", padding: "14px 16px", border: "1px solid", borderRadius: "6px", cursor: "pointer", transition: "all 0.2s" },
 
   uploadBox: { display: "flex", alignItems: "center", width: "100%", padding: "14px", backgroundColor: "#110F0E", border: "1px dashed #3A322C", borderRadius: "6px", cursor: "pointer", boxSizing: "border-box", transition: "all 0.2s" },
   imagePreviewBox: { display: "flex", alignItems: "center", gap: "16px", padding: "12px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "6px" },
@@ -272,7 +312,7 @@ const styles = {
   previewName: { color: "#EAE0C8", fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" },
   btnRemoveImg: { alignSelf: "flex-start", display: "flex", alignItems: "center", gap: "4px", background: "none", border: "none", color: "#ef4444", fontSize: "12px", cursor: "pointer", padding: 0 },
 
-  expressaPriceBox: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px", backgroundColor: "#151312", borderRadius: "8px", border: "1px solid #2A2420", marginTop: "8px" },
+  expressaPriceBox: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", backgroundColor: "#151312", borderRadius: "8px", border: "1px solid #2A2420", marginTop: "8px" },
   priceLabel: { color: "#786C63", fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" },
   priceValue: { color: "#EAE0C8", fontSize: "24px", fontFamily: "'Playfair Display', serif", margin: 0 },
   btnExpressaSubmit: { display: "flex", alignItems: "center", gap: "8px", padding: "14px 24px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "4px", fontSize: "13px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", transition: "all 0.2s" },

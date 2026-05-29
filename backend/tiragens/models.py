@@ -3,10 +3,6 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Sessao(models.Model):
-    class TipoSessao(models.TextChoices):
-        EXPRESSA = 'EXPRESSA', 'Tiragem Expressa'
-        AGENDADA = 'AGENDADA', 'Sessão Agendada'
-
     class StatusSessao(models.TextChoices):
         AGUARDANDO_PAGAMENTO = 'aguardando_pagamento', 'Aguardando Pagamento' # <--- O NOVO STATUS DE BLOQUEIO
         AGUARDANDO_GUIA = 'aguardando_guia', 'Na Fila de Espera'
@@ -29,7 +25,11 @@ class Sessao(models.Model):
         related_name='sessoes_como_guia'
     )
     
-    tipo = models.CharField(max_length=20, choices=TipoSessao.choices)
+    # AJUSTADO: Destravado de escolhas fixas para aceitar os nomes do cardápio do tarólogo
+    tipo = models.CharField(max_length=100)
+    
+    # NOVO: Valor exato cobrado na hora da reserva
+    valor_cobrado = models.DecimalField(max_digits=10, decimal_places=2, default=35.00)
     
     # AJUSTADO: status_sessao agora nasce bloqueada até o pagamento ser aprovado
     status_sessao = models.CharField(
