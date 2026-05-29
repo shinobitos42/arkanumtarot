@@ -1,0 +1,241 @@
+/* =========================================================
+   ARKANUM — Navbar
+   ========================================================= */
+
+/* ── BARRA PRINCIPAL ── */
+.ark-nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1.1rem 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #151312;
+  border-bottom: 1px solid #2A2420;
+  font-family: 'Playfair Display', 'Georgia', serif;
+  transition: box-shadow 0.3s;
+}
+
+.ark-nav--scrolled {
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* ── LOGO ── */
+.ark-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.ark-logo__text {
+  color: #D4AF37;
+  font-size: 1.45rem;
+  font-weight: normal;
+  letter-spacing: 2px;
+  font-style: italic;
+  line-height: 1;
+}
+
+/* ── LINKS DESKTOP ── */
+.ark-links {
+  display: flex;
+  gap: 2.5rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ark-link {
+  color: #EAE0C8;
+  text-decoration: none;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  font-family: 'Playfair Display', serif;
+  transition: color 0.25s;
+}
+
+.ark-link:hover {
+  color: #D4AF37;
+}
+
+/* ── CTA ── */
+.ark-cta {
+  display: inline-block;
+  text-align: center;
+  color: #151312;
+  background-color: #D4AF37;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border-radius: 2px;
+  transition: opacity 0.2s;
+}
+
+.ark-cta:hover {
+  opacity: 0.85;
+}
+
+.ark-cta--desktop {
+  padding: 9px 22px;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.ark-cta--mobile {
+  padding: 14px 0;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+/* ── HAMBURGUER ── */
+.ark-hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+/* ── OVERLAY ── */
+.ark-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 199;
+  pointer-events: none;
+  transition: background 0.35s;
+  backdrop-filter: blur(0px);
+}
+
+.ark-overlay--open {
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: all;
+  backdrop-filter: blur(2px);
+}
+
+/* ── DRAWER ── */
+.ark-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(320px, 85vw);
+  background: #151312;
+  border-left: 1px solid #3A322C;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  padding: 80px 32px 40px;
+  box-sizing: border-box;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ark-drawer--open {
+  transform: translateX(0);
+}
+
+/* Linha dourada decorativa */
+.ark-drawer__accent {
+  width: 32px;
+  height: 1px;
+  background-color: #D4AF37;
+  margin-bottom: 40px;
+  opacity: 0.7;
+}
+
+/* Links do drawer */
+.ark-drawer__links {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 48px;
+}
+
+.ark-drawer__link {
+  color: #EAE0C8;
+  text-decoration: none;
+  font-size: 1.6rem;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: normal;
+  letter-spacing: 0.5px;
+  padding: 16px 0;
+  border-bottom: 1px solid #2A2420;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: color 0.25s, gap 0.25s;
+}
+
+.ark-drawer__link:hover {
+  color: #D4AF37;
+  gap: 20px;
+}
+
+.ark-drawer__dash {
+  display: inline-block;
+  width: 20px;
+  height: 1px;
+  background-color: #D4AF37;
+  flex-shrink: 0;
+  transition: width 0.25s;
+}
+
+.ark-drawer__link:hover .ark-drawer__dash {
+  width: 28px;
+}
+
+/* Tagline do drawer */
+.ark-drawer__tagline {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 0.78rem;
+  color: #4A3E32;
+  text-align: center;
+  letter-spacing: 1px;
+  margin: 0;
+  margin-top: auto;
+}
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+/* Desktop: esconde hamburguer */
+@media (min-width: 769px) {
+  .ark-hamburger {
+    display: none !important;
+  }
+}
+
+/* Mobile: esconde links e CTA desktop, exibe hamburguer */
+@media (max-width: 768px) {
+  .ark-links {
+    display: none !important;
+  }
+
+  .ark-cta--desktop {
+    display: none !important;
+  }
+
+  .ark-hamburger {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ark-nav {
+    padding: 1rem 5%;
+  }
+}

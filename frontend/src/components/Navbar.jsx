@@ -1,41 +1,89 @@
-import { Link } from 'react-router-dom';
-import { Moon } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Moon, X, Menu } from "lucide-react";
+import "./Navbar.css";
 
 export default function Navbar() {
-  return (
-    // Adicionamos a classe 'nav-mobile' para facilitar o controle pelo mobile.css
-    <nav className="nav-mobile" style={styles.nav}>
-      <div style={styles.logoBox}>
-        <Moon size={24} color="#D4AF37" style={{ marginRight: '8px' }} />
-        <h3 style={styles.logoText}>Arkanum</h3>
-      </div>
-      
-      <div className="grid-mobile" style={styles.linkBox}>
-        <Link to="/" style={styles.link}>O Espaço</Link>
-        <Link to="/login" style={styles.link}>Tarólogos</Link>
-      </div>
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled]   = useState(false);
+  const location = useLocation();
 
-      <Link to="/login" style={styles.loginBtn}>Agendar Sessão</Link>
-    </nav>
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Fecha o drawer ao mudar de rota
+  useEffect(() => { setMenuOpen(false); }, [location]);
+
+  // Bloqueia scroll do body com menu aberto
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
+
+  return (
+    <>
+      {/* ── BARRA ── */}
+      <nav className={`ark-nav${scrolled ? " ark-nav--scrolled" : ""}`}>
+        <Link to="/" className="ark-logo">
+          <Moon size={22} color="#D4AF37" className="ark-logo__icon" />
+          <span className="ark-logo__text">Arkanum</span>
+        </Link>
+
+        {/* Links centrais — só desktop */}
+        <div className="ark-links">
+          <Link to="/" className="ark-link">O Espaço</Link>
+          <Link to="/tarologos" className="ark-link">Tarólogos</Link>
+        </div>
+
+        {/* CTA — só desktop */}
+        <Link to="/login" className="ark-cta ark-cta--desktop">
+          Agendar Sessão
+        </Link>
+
+        {/* Hamburguer — só mobile */}
+        <button
+          className="ark-hamburger"
+          onClick={() => setMenuOpen(v => !v)}
+          aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+        >
+          {menuOpen
+            ? <X size={22} color="#D4AF37" />
+            : <Menu size={22} color="#D4AF37" />}
+        </button>
+      </nav>
+
+      {/* ── OVERLAY ── */}
+      <div
+        className={`ark-overlay${menuOpen ? " ark-overlay--open" : ""}`}
+        onClick={() => setMenuOpen(false)}
+      />
+
+      {/* ── DRAWER ── */}
+      <aside className={`ark-drawer${menuOpen ? " ark-drawer--open" : ""}`}>
+        <div className="ark-drawer__accent" />
+
+        <nav className="ark-drawer__links">
+          <Link to="/" className="ark-drawer__link">
+            <span className="ark-drawer__dash" />
+            O Espaço
+          </Link>
+          <Link to="/tarologos" className="ark-drawer__link">
+            <span className="ark-drawer__dash" />
+            Tarólogos
+          </Link>
+        </nav>
+
+        <Link to="/login" className="ark-cta ark-cta--mobile">
+          ✦ Agendar Sessão
+        </Link>
+
+        <p className="ark-drawer__tagline">
+          Sabedoria ancestral para a sua jornada.
+        </p>
+      </aside>
+    </>
   );
 }
-
-const styles = {
-  nav: {
-    width: '100%',
-    boxSizing: 'border-box', 
-    padding: '1.5rem 5%',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    background: '#151312',
-    borderBottom: '1px solid #3A322C',
-    zIndex: 100,
-    fontFamily: "'Playfair Display', 'Georgia', serif"
-  },
-  logoBox: { display: 'flex', alignItems: 'center' },
-  logoText: { margin: 0, color: '#D4AF37', fontSize: '1.6rem', fontWeight: 'normal', letterSpacing: '2px', fontStyle: 'italic' },
-  linkBox: { display: 'flex', gap: '2.5rem' },
-  link: { color: '#EAE0C8', textDecoration: 'none', fontSize: '1rem', transition: 'color 0.3s', letterSpacing: '1px' },
-  loginBtn: { color: '#151312', backgroundColor: '#D4AF37', padding: '10px 24px', borderRadius: '2px', textDecoration: 'none', fontSize: '0.95rem', fontFamily: "'Inter', sans-serif", fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }
-};
