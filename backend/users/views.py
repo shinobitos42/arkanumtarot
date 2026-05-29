@@ -8,13 +8,13 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
-from django.db.models import Avg
+from django.db.models import Avg, Sum  # <-- Adicionado o Sum aqui
 from django.db import transaction
 from decimal import Decimal
 
 from rest_framework import generics, status
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser  # <-- Adicionado IsAdminUser aqui
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -339,3 +339,56 @@ class MercadoPagoWebhookView(View):
 
         # 6. O Mercado Pago exige que você responda com HTTP 200 OK
         return JsonResponse({"status": "success"}, status=200)
+
+
+# ==========================================
+# PAINEL DE ADMINISTRAÇÃO (SÓ PARA O DONO)
+# ==========================================
+class AdminDashboardView(APIView):
+    permission_classes = [IsAdminUser] # Apenas Superusers do Django acessam
+
+    def get(self, request):
+        # 1. Calculando as Estatísticas Gerais
+        total_consulentes = CustomUser.objects.filter(role='CONSULENTE').count()
+        total_tarologos = CustomUser.objects.filter(role='TAROLOGO').count()
+        sessoes_realizadas = Sessao.objects.exclude(status_sessao='aguardando_pagamento').count()
+        assinaturas_ativas = Assinatura.objects.filter(ativo=True).count()
+        
+        # Faturamento Bruto (Soma do valor de todas as sessões realizadas)
+        faturamento_dict = Sessao.objects.exclude(status_sessao='aguardando_pagamento').aggregate(Sum('valor_cobrado'))
+        faturamento_bruto = faturamento_dict['valor_cobrado__sum'] or 0.00
+
+        # 2. Buscando Saques Pendentes
+        saques_db = TransacaoFinanceira.objects.filter(tipo='SAQUE', status='PROCESSANDO')
+        saques_pendentes = []
+        for saque in saques_db:
+            saques_pendentes.append({
+                "id": saque.id,
+                "tarologo": saque.tarologo.user.first_name,
+                "valor": str(saque.valor),
+                "chave_pix": saque.descricao.replace("Saque para Pix (", "").replace(")", ""), # Limpa a string da descrição
+                "data": saque.data_criacao.strftime('%d/%m/%Y')
+            })
+
+        return Response({
+            "stats": {
+                "total_consulentes": total_consulentes,
+                "total_tarologos": total_tarologos,
+                "sessoes_realizadas": sessoes_realizadas,
+                "assinaturas_ativas": assinaturas_ativas,
+                "faturamento_bruto": f"{float(faturamento_bruto):.2f}"
+            },
+            "saques_pendentes": saques_pendentes
+        })
+
+class AprovarSaqueView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, pk):
+        try:
+            saque = TransacaoFinanceira.objects.get(id=pk, tipo='SAQUE', status='PROCESSANDO')
+            saque.status = 'CONCLUIDO'
+            saque.save()
+            return Response({"message": "Saque marcado como pago com sucesso!"})
+        except TransacaoFinanceira.DoesNotExist:
+            return Response({"error": "Saque não encontrado ou já processado."}, status=status.HTTP_404_NOT_FOUND)

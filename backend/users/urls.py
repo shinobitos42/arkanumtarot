@@ -3,7 +3,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     RegisterView, TarologoListView, CustomTokenObtainPairView, 
     UserMeView, AgendaUpdateView, ExtratoView, SolicitarSaqueView,
-    ProcessarPagamentoBrickView, MercadoPagoWebhookView # <--- IMPORTAÇÕES ATUALIZADAS
+    ProcessarPagamentoBrickView, MercadoPagoWebhookView,
+    AdminDashboardView, AprovarSaqueView # <--- IMPORTAÇÕES DO ADMIN ADICIONADAS
 )
 
 urlpatterns = [
@@ -15,7 +16,7 @@ urlpatterns = [
     # Rota pública para listar os tarólogos (usada pelo Consulente)
     path('tarologos/', TarologoListView.as_view(), name='tarologos_list'),
     
-    # Rotas privadas
+    # Rotas privadas (Perfil)
     path('me/', UserMeView.as_view(), name='user_me'),
     path('me/agenda/', AgendaUpdateView.as_view(), name='user_agenda'),
     path('me/extrato/', ExtratoView.as_view(), name='user_extrato'),
@@ -26,4 +27,10 @@ urlpatterns = [
     
     # ROTA DO WEBHOOK (Totalmente Pública - O Mercado Pago vai bater aqui)
     path('webhook/mercadopago/', MercadoPagoWebhookView.as_view(), name='webhook_mercadopago'),
+
+    # ==========================================
+    # ROTAS DO PAINEL DE ADMINISTRAÇÃO
+    # ==========================================
+    path('admin/dashboard/', AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('admin/saques/<int:pk>/aprovar/', AprovarSaqueView.as_view(), name='admin_aprovar_saque'),
 ]
