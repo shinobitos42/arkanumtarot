@@ -28,7 +28,6 @@ export default function PainelAdmin() {
   useEffect(() => {
     const carregarDadosAdmin = async () => {
       try {
-        // CORREÇÃO: Adicionado o prefixo 'users/' na rota
         const response = await api.get('users/admin/dashboard/');
         setStats(response.data.stats);
         setSaquesPendentes(response.data.saques_pendentes);
@@ -36,7 +35,7 @@ export default function PainelAdmin() {
       } catch (error) {
         console.error("Erro ao carregar o painel administrativo:", error);
         
-        // TRAVA DE SEGURANÇA: Se o backend responder 403 (Forbidden) ou 401 (Unauthorized)
+        // Se o backend responder 403 (Forbidden) ou 401 (Unauthorized)
         if (error.response && (error.response.status === 403 || error.response.status === 401)) {
           setIsAutorizado(false);
         }
@@ -48,17 +47,25 @@ export default function PainelAdmin() {
     carregarDadosAdmin();
   }, []);
 
+  // GATILHO DE REDIRECIONAMENTO AUTOMÁTICO PARA A HOME
+  useEffect(() => {
+    if (!isAutorizado) {
+      const timer = setTimeout(() => {
+        navigate('/'); // Envia automaticamente para a Landing Page / Home
+      }, 3000); // 3 segundos para o usuário conseguir ler o aviso na tela
+      return () => clearTimeout(timer);
+    }
+  }, [isAutorizado, navigate]);
+
   const mudarAba = (aba) => {
     setAbaAtiva(aba);
     setMenuAberto(false);
   };
 
-  const aprovarSaque = async (id) => {
+  const approveSaque = async (id) => {
     if (!window.confirm("Confirmar que o PIX foi transferido para a conta do Guia?")) return;
     try {
-      // CORREÇÃO: Adicionado o prefixo 'users/' na rota
       await api.post(`users/admin/saques/${id}/aprovar/`);
-      // Remove o saque aprovado da lista na tela em tempo real
       setSaquesPendentes(saquesPendentes.filter(saque => saque.id !== id));
       alert("Saque aprovado e baixado no sistema com sucesso!");
     } catch (error) {
@@ -84,7 +91,7 @@ export default function PainelAdmin() {
   }
 
   // ==========================================
-  // ESTADO 2: TELA DE ACESSO NEGADO (PROTEÇÃO)
+  // ESTADO 2: TELA DE ACESSO NEGADO (PROTEÇÃO COM AUTO-REDIRECT)
   // ==========================================
   if (!isAutorizado) {
     return (
@@ -94,10 +101,10 @@ export default function PainelAdmin() {
         </div>
         <h1 style={styles.errorTitle}>Acesso Restrito</h1>
         <p style={styles.errorText}>
-          Esta área é exclusiva para o Administrador Geral da plataforma. Suas credenciais atuais não possuem privilégios de superusuário.
+          Esta área é exclusiva para o Administrador Geral. Redirecionando automaticamente para a página inicial...
         </p>
-        <button onClick={() => navigate('/dashboard')} style={styles.btnVoltarPainel}>
-          <ArrowLeft size={16} /> Voltar para o Sistema
+        <button onClick={() => navigate('/')} style={styles.btnVoltarPainel}>
+          <ArrowLeft size={16} /> Ir para a Home Agora
         </button>
       </div>
     );
@@ -201,7 +208,7 @@ export default function PainelAdmin() {
                           <td style={styles.td}><code style={{backgroundColor: '#110F0E', padding: '6px 10px', borderRadius: '4px', color: '#D4AF37', fontSize: '13px'}}>{saque.chave_pix}</code></td>
                           <td style={{...styles.td, fontWeight: '700', color: '#10b981'}}>R$ {parseFloat(saque.valor).toFixed(2).replace('.', ',')}</td>
                           <td style={styles.td}>
-                            <button onClick={() => aprovarSaque(saque.id)} style={styles.btnAprovar}>
+                            <button onClick={() => approveSaque(saque.id)} style={styles.btnAprovar}>
                               <CheckCircle size={16} /> Confirmar PIX
                             </button>
                           </td>
@@ -226,7 +233,6 @@ export default function PainelAdmin() {
   );
 }
 
-// CORREÇÃO: O NavItem não estava sendo reconhecido porque a cópia parou antes.
 const NavItem = ({ icon, label, ativo, onClick }) => (
   <div onClick={onClick} style={{ ...styles.navItem, ...(ativo ? styles.navItemAtivo : {}) }}>
     <div style={{ color: ativo ? '#ef4444' : '#786C63' }}>{icon}</div>
