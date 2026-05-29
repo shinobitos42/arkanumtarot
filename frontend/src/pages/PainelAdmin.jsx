@@ -28,8 +28,8 @@ export default function PainelAdmin() {
   useEffect(() => {
     const carregarDadosAdmin = async () => {
       try {
-        // Puxa as métricas e saques reais do Django
-        const response = await api.get('admin/dashboard/');
+        // CORREÇÃO: Adicionado o prefixo 'users/' na rota
+        const response = await api.get('users/admin/dashboard/');
         setStats(response.data.stats);
         setSaquesPendentes(response.data.saques_pendentes);
         setIsAutorizado(true);
@@ -56,7 +56,8 @@ export default function PainelAdmin() {
   const aprovarSaque = async (id) => {
     if (!window.confirm("Confirmar que o PIX foi transferido para a conta do Guia?")) return;
     try {
-      await api.post(`admin/saques/${id}/aprovar/`);
+      // CORREÇÃO: Adicionado o prefixo 'users/' na rota
+      await api.post(`users/admin/saques/${id}/aprovar/`);
       // Remove o saque aprovado da lista na tela em tempo real
       setSaquesPendentes(saquesPendentes.filter(saque => saque.id !== id));
       alert("Saque aprovado e baixado no sistema com sucesso!");
@@ -225,6 +226,14 @@ export default function PainelAdmin() {
   );
 }
 
+// CORREÇÃO: O NavItem não estava sendo reconhecido porque a cópia parou antes.
+const NavItem = ({ icon, label, ativo, onClick }) => (
+  <div onClick={onClick} style={{ ...styles.navItem, ...(ativo ? styles.navItemAtivo : {}) }}>
+    <div style={{ color: ativo ? '#ef4444' : '#786C63' }}>{icon}</div>
+    <span style={{ ...styles.navItemText, color: ativo ? '#FDFBF7' : '#A89C92' }}>{label}</span>
+  </div>
+);
+
 const styles = {
   appContainer: { display: "flex", height: "100vh", backgroundColor: "#110F0E", fontFamily: "'Inter', sans-serif" },
   sidebar: { display: "flex", flexDirection: "column", width: "260px", backgroundColor: "#151312", borderRight: "1px solid #2A2420", padding: "32px 20px" },
@@ -257,7 +266,6 @@ const styles = {
   td: { padding: "16px", color: "#EAE0C8", fontSize: "14px", verticalAlign: "middle" },
   btnAprovar: { display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "6px", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" },
 
-  // ESTILOS DE ERRO E BLOQUEIO DE TELA
   centerContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#110F0E', padding: '20px', fontFamily: "'Inter', sans-serif" },
   errorIconWrapper: { width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' },
   errorTitle: { color: '#FDFBF7', fontSize: '28px', fontFamily: "'Playfair Display', serif", marginBottom: '12px', fontWeight: 'normal' },
