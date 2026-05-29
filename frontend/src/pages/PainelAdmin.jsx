@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   ShieldAlert, Users, CreditCard, Activity, DollarSign, 
-  CheckCircle, XCircle, Search, Menu, ChevronDown, Moon, 
-  LogOut, Wallet, FileText
+  CheckCircle, Menu, LogOut, Wallet, FileText, Loader2, ShieldX, ArrowLeft
 } from "lucide-react";
 import api from "../services/api";
 
@@ -12,8 +11,11 @@ export default function PainelAdmin() {
   const [abaAtiva, setAbaAtiva] = useState("Visão Geral");
   const [menuAberto, setMenuAberto] = useState(false);
 
-  // Estados dos Dados do Admin
+  // ESTADOS DE CONTROLE DE ACESSO E CARREGAMENTO
   const [loading, setLoading] = useState(true);
+  const [isAutorizado, setIsAutorizado] = useState(true);
+
+  // ESTADOS DOS DADOS REAIS DO BACKEND
   const [stats, setStats] = useState({
     total_consulentes: 0,
     total_tarologos: 0,
@@ -21,29 +23,28 @@ export default function PainelAdmin() {
     assinaturas_ativas: 0,
     faturamento_bruto: "0.00"
   });
-  
   const [saquesPendentes, setSaquesPendentes] = useState([]);
 
   useEffect(() => {
-    // Busca os dados do painel Admin no backend
     const carregarDadosAdmin = async () => {
       try {
+        // Puxa as métricas e saques reais do Django
         const response = await api.get('admin/dashboard/');
         setStats(response.data.stats);
         setSaquesPendentes(response.data.saques_pendentes);
+        setIsAutorizado(true);
       } catch (error) {
-        console.error("Erro ao carregar admin. Verifique se você é superuser:", error);
-        // Fallback visual para testes no frontend
-        setStats({
-          total_consulentes: 142, total_tarologos: 18, sessoes_realizadas: 856, assinaturas_ativas: 45, faturamento_bruto: "12540.00"
-        });
-        setSaquesPendentes([
-          { id: 1, tarologo: "Helena de Oliveira", valor: "150.00", chave_pix: "helena@email.com", data: "29/05/2026" }
-        ]);
+        console.error("Erro ao carregar o painel administrativo:", error);
+        
+        // TRAVA DE SEGURANÇA: Se o backend responder 403 (Forbidden) ou 401 (Unauthorized)
+        if (error.response && (error.response.status === 403 || error.response.status === 401)) {
+          setIsAutorizado(false);
+        }
       } finally {
         setLoading(false);
       }
     };
+    
     carregarDadosAdmin();
   }, []);
 
@@ -53,13 +54,14 @@ export default function PainelAdmin() {
   };
 
   const aprovarSaque = async (id) => {
-    if(!window.confirm("Confirmar que o PIX foi transferido para a conta do Guia?")) return;
+    if (!window.confirm("Confirmar que o PIX foi transferido para a conta do Guia?")) return;
     try {
       await api.post(`admin/saques/${id}/aprovar/`);
+      // Remove o saque aprovado da lista na tela em tempo real
       setSaquesPendentes(saquesPendentes.filter(saque => saque.id !== id));
-      alert("Saque aprovado e baixado no sistema!");
+      alert("Saque aprovado e baixado no sistema com sucesso!");
     } catch (error) {
-      alert("Erro ao aprovar saque.");
+      alert("Não foi possível processar a aprovação do saque. Tente novamente.");
     }
   };
 
@@ -68,8 +70,43 @@ export default function PainelAdmin() {
     navigate('/login');
   };
 
+  // ==========================================
+  // ESTADO 1: CARREGANDO OS DADOS DO BANCO
+  // ==========================================
+  if (loading) {
+    return (
+      <div style={styles.centerContainer}>
+        <Loader2 size={40} color="#ef4444" style={{ animation: "spin 1s linear infinite", marginBottom: '16px' }} />
+        <p style={{ color: '#A89C92', fontSize: '14px' }}>Autenticando credenciais administrativas...</p>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // ESTADO 2: TELA DE ACESSO NEGADO (PROTEÇÃO)
+  // ==========================================
+  if (!isAutorizado) {
+    return (
+      <div style={styles.centerContainer}>
+        <div style={styles.errorIconWrapper}>
+          <ShieldX size={44} color="#ef4444" />
+        </div>
+        <h1 style={styles.errorTitle}>Acesso Restrito</h1>
+        <p style={styles.errorText}>
+          Esta área é exclusiva para o Administrador Geral da plataforma. Suas credenciais atuais não possuem privilégios de superusuário.
+        </p>
+        <button onClick={() => navigate('/dashboard')} style={styles.btnVoltarPainel}>
+          <ArrowLeft size={16} /> Voltar para o Sistema
+        </button>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // ESTADO 3: PAINEL REAL AUTORIZADO
+  // ==========================================
   return (
-    <div className={`app-container`} style={styles.appContainer}>
+    <div className="app-container" style={styles.appContainer}>
       
       <div className={`menu-overlay ${menuAberto ? 'aberto' : ''}`} onClick={() => setMenuAberto(false)}></div>
 
@@ -100,117 +137,93 @@ export default function PainelAdmin() {
               <Menu size={28} color="#ef4444" />
             </button>
             <h1 className="breadcrumb-desktop page-title" style={{...styles.pageTitle, margin: 0}}>{abaAtiva}</h1>
-            <h2 className="mobile-title" style={{ color: '#ef4444', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 }}>Arkanum Admin</h2>
+            <h2 className="mobile-title" style={{ color: '#ef4444', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 }}>Arcanum Admin</h2>
           </div>
         </header>
 
-        {loading ? (
-          <div style={{color: '#A89C92'}}>Carregando dados da plataforma...</div>
-        ) : (
-          <>
-            {abaAtiva === "Visão Geral" && (
-              <div style={styles.dashboardContainer}>
-                <div className="grid-mobile" style={styles.statsGrid}>
-                  <div style={styles.statCard}>
-                    <div style={{...styles.statIcon, backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6'}}><Users size={24} /></div>
-                    <div>
-                      <p style={styles.statLabel}>Total de Usuários</p>
-                      <h3 style={styles.statValue}>{stats.total_consulentes + stats.total_tarologos}</h3>
-                    </div>
-                  </div>
-                  <div style={styles.statCard}>
-                    <div style={{...styles.statIcon, backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981'}}><CreditCard size={24} /></div>
-                    <div>
-                      <p style={styles.statLabel}>Assinaturas Ativas</p>
-                      <h3 style={styles.statValue}>{stats.assinaturas_ativas}</h3>
-                    </div>
-                  </div>
-                  <div style={styles.statCard}>
-                    <div style={{...styles.statIcon, backgroundColor: 'rgba(168, 85, 247, 0.1)', color: '#a855f7'}}><FileText size={24} /></div>
-                    <div>
-                      <p style={styles.statLabel}>Sessões Realizadas</p>
-                      <h3 style={styles.statValue}>{stats.sessoes_realizadas}</h3>
-                    </div>
-                  </div>
-                  <div style={styles.statCard}>
-                    <div style={{...styles.statIcon, backgroundColor: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37'}}><DollarSign size={24} /></div>
-                    <div>
-                      <p style={styles.statLabel}>Faturamento Estimado</p>
-                      <h3 style={styles.statValue}>R$ {stats.faturamento_bruto}</h3>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={styles.sectionCard}>
-                  <h3 style={styles.sectionTitle}>Últimas Solicitações de Saque</h3>
-                  <p style={{color: '#A89C92', fontSize: '14px', marginBottom: '20px'}}>Pague os guias via PIX no seu banco e marque como aprovado aqui.</p>
-                  
-                  {saquesPendentes.length === 0 ? (
-                    <div style={{padding: '40px', textAlign: 'center', backgroundColor: '#151312', borderRadius: '8px', border: '1px dashed #2A2420', color: '#A89C92'}}>
-                      Nenhum saque pendente. Todos os guias estão pagos!
-                    </div>
-                  ) : (
-                    <div style={styles.tableWrapper}>
-                      <table style={styles.table}>
-                        <thead>
-                          <tr>
-                            <th style={styles.th}>Guia / Oraculista</th>
-                            <th style={styles.th}>Chave PIX</th>
-                            <th style={styles.th}>Valor</th>
-                            <th style={styles.th}>Ação</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {saquesPendentes.map(saque => (
-                            <tr key={saque.id} style={styles.tr}>
-                              <td style={styles.td}>{saque.tarologo}</td>
-                              <td style={styles.td}><code style={{backgroundColor: '#110F0E', padding: '4px 8px', borderRadius: '4px', color: '#D4AF37'}}>{saque.chave_pix}</code></td>
-                              <td style={{...styles.td, fontWeight: '700', color: '#10b981'}}>R$ {saque.valor}</td>
-                              <td style={styles.td}>
-                                <button onClick={() => aprovarSaque(saque.id)} style={styles.btnAprovar}>
-                                  <CheckCircle size={16} /> Aprovar Pagamento
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+        {abaAtiva === "Visão Geral" && (
+          <div style={styles.dashboardContainer}>
+            <div className="grid-mobile" style={styles.statsGrid}>
+              <div style={styles.statCard}>
+                <div style={{...styles.statIcon, backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6'}}><Users size={24} /></div>
+                <div>
+                  <p style={styles.statLabel}>Total de Usuários</p>
+                  <h3 style={styles.statValue}>{stats.total_consulentes + stats.total_tarologos}</h3>
                 </div>
               </div>
-            )}
-
-            {abaAtiva === "Saques" && (
-              <div style={styles.sectionCard}>
-                <h3 style={styles.sectionTitle}>Painel de Pagamento aos Guias</h3>
-                <p style={{color: '#A89C92', marginBottom: '20px'}}>Aqui você tem o controle total do dinheiro que sai da plataforma.</p>
-                {/* Você pode expandir esta aba depois com histórico de saques já pagos */}
-                <div style={{padding: '40px', textAlign: 'center', backgroundColor: '#151312', borderRadius: '8px', color: '#A89C92'}}>
-                  Fluxo de caixa sob controle. Visualize as pendências na Visão Geral.
+              <div style={styles.statCard}>
+                <div style={{...styles.statIcon, backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981'}}><CreditCard size={24} /></div>
+                <div>
+                  <p style={styles.statLabel}>Assinaturas Ativas</p>
+                  <h3 style={styles.statValue}>{stats.assinaturas_ativas}</h3>
                 </div>
               </div>
-            )}
-
-            {abaAtiva !== "Visão Geral" && abaAtiva !== "Saques" && (
-              <div style={styles.sectionCard}>
-                <h3 style={styles.sectionTitle}>{abaAtiva}</h3>
-                <p style={{color: '#A89C92'}}>Módulo em construção para os administradores da plataforma.</p>
+              <div style={styles.statCard}>
+                <div style={{...styles.statIcon, backgroundColor: 'rgba(168, 85, 247, 0.1)', color: '#a855f7'}}><FileText size={24} /></div>
+                <div>
+                  <p style={styles.statLabel}>Sessões Realizadas</p>
+                  <h3 style={styles.statValue}>{stats.sessoes_realizadas}</h3>
+                </div>
               </div>
-            )}
-          </>
+              <div style={styles.statCard}>
+                <div style={{...styles.statIcon, backgroundColor: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37'}}><DollarSign size={24} /></div>
+                <div>
+                  <p style={styles.statLabel}>Faturamento Estimado</p>
+                  <h3 style={styles.statValue}>R$ {stats.faturamento_bruto.replace('.', ',')}</h3>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.sectionCard}>
+              <h3 style={styles.sectionTitle}>Últimas Solicitações de Saque</h3>
+              <p style={{color: '#A89C92', fontSize: '14px', marginBottom: '20px'}}>Efetue a transferência via PIX em seu banco corporativo antes de dar a baixa no botão.</p>
+              
+              {saquesPendentes.length === 0 ? (
+                <div style={{padding: '40px', textAlign: 'center', backgroundColor: '#151312', borderRadius: '8px', border: '1px dashed #2A2420', color: '#A89C92', fontSize: '14px'}}>
+                  Nenhum repasse pendente no momento. Todos os guias estão pagos!
+                </div>
+              ) : (
+                <div style={styles.tableWrapper}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr>
+                        <th style={styles.th}>Guia / Oraculista</th>
+                        <th style={styles.th}>Chave PIX</th>
+                        <th style={styles.th}>Valor</th>
+                        <th style={styles.th}>Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {saquesPendentes.map(saque => (
+                        <tr key={saque.id} style={styles.tr}>
+                          <td style={styles.td}>{saque.tarologo}</td>
+                          <td style={styles.td}><code style={{backgroundColor: '#110F0E', padding: '6px 10px', borderRadius: '4px', color: '#D4AF37', fontSize: '13px'}}>{saque.chave_pix}</code></td>
+                          <td style={{...styles.td, fontWeight: '700', color: '#10b981'}}>R$ {parseFloat(saque.valor).toFixed(2).replace('.', ',')}</td>
+                          <td style={styles.td}>
+                            <button onClick={() => aprovarSaque(saque.id)} style={styles.btnAprovar}>
+                              <CheckCircle size={16} /> Confirmar PIX
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {abaAtiva !== "Visão Geral" && (
+          <div style={styles.sectionCard}>
+            <h3 style={styles.sectionTitle}>{abaAtiva}</h3>
+            <p style={{color: '#A89C92', fontSize: '14px'}}>Este módulo está sincronizado e aguardando a expansão das tabelas do banco de dados.</p>
+          </div>
         )}
       </main>
     </div>
   );
 }
-
-const NavItem = ({ icon, label, ativo, onClick }) => (
-  <div onClick={onClick} style={{ ...styles.navItem, ...(ativo ? styles.navItemAtivo : {}) }}>
-    <div style={{ color: ativo ? '#ef4444' : '#786C63' }}>{icon}</div>
-    <span style={{ ...styles.navItemText, color: ativo ? '#FDFBF7' : '#A89C92' }}>{label}</span>
-  </div>
-);
 
 const styles = {
   appContainer: { display: "flex", height: "100vh", backgroundColor: "#110F0E", fontFamily: "'Inter', sans-serif" },
@@ -242,5 +255,12 @@ const styles = {
   th: { padding: "16px", color: "#786C63", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #2A2420", fontWeight: "600" },
   tr: { borderBottom: "1px solid #2A2420", transition: "background 0.2s", ":hover": { backgroundColor: "#151312" } },
   td: { padding: "16px", color: "#EAE0C8", fontSize: "14px", verticalAlign: "middle" },
-  btnAprovar: { display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "6px", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" }
+  btnAprovar: { display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "6px", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" },
+
+  // ESTILOS DE ERRO E BLOQUEIO DE TELA
+  centerContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#110F0E', padding: '20px', fontFamily: "'Inter', sans-serif" },
+  errorIconWrapper: { width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' },
+  errorTitle: { color: '#FDFBF7', fontSize: '28px', fontFamily: "'Playfair Display', serif", marginBottom: '12px', fontWeight: 'normal' },
+  errorText: { color: '#A89C92', fontSize: '15px', lineHeight: '1.6', textAlign: 'center', maxWidth: '440px', marginBottom: '32px', fontWeight: '300' },
+  btnVoltarPainel: { display: 'flex', alignItems: 'center', gap: '8px', padding: '14px 28px', backgroundColor: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }
 };
