@@ -1,13 +1,22 @@
+import json
 import mercadopago
+from datetime import timedelta
+
 from django.conf import settings
+from django.http import JsonResponse
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.utils.timezone import now
+from django.db.models import Avg
+from django.db import transaction
+from decimal import Decimal
+
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
-from django.db.models import Avg
-from django.db import transaction
-from decimal import Decimal
 
 from .models import CustomUser, TarologoProfile, AgendaTarologo, TurnoTrabalho, Folga, TransacaoFinanceira, Assinatura
 from tiragens.models import Sessao 
@@ -231,7 +240,8 @@ class CriarCheckoutAssinaturaView(APIView):
             return Response({"error": "Plano inválido."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 2. Iniciar a SDK do Mercado Pago
-        sdk = mercadopago.SDK("SEU_ACCESS_TOKEN_DO_MERCADO_PAGO_AQUI")
+        # A chave deve estar configurada no arquivo settings.py (MERCADOPAGO_ACCESS_TOKEN = 'sua_chave_aqui')
+        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
 
         # Configura as URLs de retorno de acordo com o tipo de usuário
         url_sucesso = "https://www.arkanumtarot.com.br/painel-tarologo" if user.role == 'TAROLOGO' else "https://www.arkanumtarot.com.br/painel"
@@ -268,3 +278,60 @@ class CriarCheckoutAssinaturaView(APIView):
         return Response({
             "checkout_url": url_checkout
         }, status=status.HTTP_200_OK)
+
+
+# ==========================================
+# VIEW DO WEBHOOK (MERCADO PAGO)
+# ==========================================
+@method_decorator(csrf_exempt, name='dispatch')
+class MercadoPagoWebhookView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            # 1. Lê o corpo da requisição que o Mercado Pago enviou
+            payload = json.loads(request.body)
+            
+            # O MP envia o tipo de evento em "type" ou "topic" dependendo da versão da API
+            event_type = payload.get("type") or payload.get("topic")
+            
+            if event_type == "payment":
+                payment_id = payload.get("data", {}).get("id")
+                
+                if payment_id:
+                    # 2. Por segurança, não confiamos cegamente no webhook. 
+                    # Usamos o ID recebido para perguntar à API oficial do MP se o pagamento é real.
+                    sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+                    payment_info = sdk.payment().get(payment_id)
+                    
+                    if payment_info["status"] == 200:
+                        payment_data = payment_info["response"]
+                        status_pagamento = payment_data.get("status")
+                        external_reference = payment_data.get("external_reference", "")
+                        
+                        # 3. Verifica se o pagamento foi APROVADO e se a referência é do nosso sistema de assinaturas
+                        if status_pagamento == "approved" and external_reference and external_reference.startswith("assinatura_user_"):
+                            
+                            # A referência vem no formato: assinatura_user_5_CIRCULO_ARCANO_CONSULENTE
+                            partes = external_reference.replace("assinatura_user_", "").split("_", 1)
+                            user_id = partes[0]
+                            plano_escolhido = partes[1]
+                            
+                            # 4. Busca o usuário no banco de dados
+                            user = CustomUser.objects.get(id=user_id)
+                            
+                            # 5. Cria ou atualiza a assinatura do usuário
+                            assinatura, created = Assinatura.objects.get_or_create(user=user)
+                            assinatura.plano = plano_escolhido
+                            assinatura.ativo = True
+                            assinatura.data_expiracao = now() + timedelta(days=30) # Assinatura válida por 30 dias
+                            assinatura.pagamento_id = str(payment_id)
+                            assinatura.save()
+                            
+                            print(f"[Webhook] Sucesso: Assinatura de {user.first_name} ativada no plano {plano_escolhido}.")
+
+        except Exception as e:
+            print(f"[Webhook] Erro ao processar notificação: {e}")
+            # Retornamos 200 mesmo com erro interno para o MP não ficar travado em loop de reenvio
+            return JsonResponse({"status": "error", "message": str(e)}, status=200)
+
+        # 6. O Mercado Pago exige que você responda com HTTP 200 OK
+        return JsonResponse({"status": "success"}, status=200)
