@@ -1,7 +1,6 @@
-// App.jsx (SEM ALTERAÇÕES)
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async'; // <-- IMPORTAÇÃO NECESSÁRIA
+import { HelmetProvider } from 'react-helmet-async';
 import './mobile.css';
 
 // Importação das Páginas
@@ -12,11 +11,12 @@ import DashboardTarot from './pages/DashboardTarot';
 import PainelTarologo from './pages/PainelTarologo';
 import Termos from './pages/Termos';
 import Privacidade from './pages/Privacidade';
-import Planos from './pages/Planos'; // <-- IMPORTANDO A TELA NOVA DE PLANOS
+import Planos from './pages/Planos'; 
+import PainelAdmin from './pages/PainelAdmin'; // <--- IMPORTANDO A TELA DE ADMINISTRAÇÃO
 
 export default function App() {
   return (
-    <HelmetProvider> {/* <-- ENVOLVENDO TODA A APLICAÇÃO */}
+    <HelmetProvider>
       <BrowserRouter>
         <Routes>
           {/* Rotas Públicas */}
@@ -25,11 +25,14 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/termos" element={<Termos />} />
           <Route path="/privacidade" element={<Privacidade />} />
-          <Route path="/planos" element={<Planos />} /> {/* <-- ROTA ADICIONADA */}
+          <Route path="/planos" element={<Planos />} />
 
           {/* Rotas Privadas (Painéis) */}
           <Route path="/dashboard" element={<DashboardTarot />} />
           <Route path="/painel-tarologo" element={<PainelTarologo />} />
+          
+          {/* Rota Exclusiva de Administração */}
+          <Route path="/admin" element={<PainelAdmin />} /> {/* <--- ROTA ADICIONADA AQUI */}
         </Routes>
       </BrowserRouter>
     </HelmetProvider>
