@@ -39,10 +39,7 @@ export default function PainelTarologo() {
     const buscarDadosFixos = async () => {
       try {
         const resPerfil = await api.get('users/me/');
-        
-        if (resPerfil.data.nome_plano_atual) {
-            setNomePlano(resPerfil.data.nome_plano_atual);
-        }
+        if (resPerfil.data.nome_plano_atual) setNomePlano(resPerfil.data.nome_plano_atual);
 
         setPerfil({
           especialidade: resPerfil.data.tarologo_profile?.especialidade || "",
@@ -154,9 +151,9 @@ export default function PainelTarologo() {
   };
 
   return (
-    <div className="app-container" style={styles.appContainer}>
+    <div className={`app-container ${abaAtiva === 'Sessões Ativas' ? 'app-modo-chat' : ''}`} style={styles.appContainer}>
       
-      <aside className="sidebar" style={styles.sidebar}>
+      <aside className="sidebar-dashboard" style={styles.sidebar}>
         <div style={styles.logoContainer}>
           <Moon size={28} color="#D4AF37" />
           <h2 style={styles.logoText}>Arkanum Pro</h2>
@@ -186,18 +183,15 @@ export default function PainelTarologo() {
               <span style={styles.planTitle}>{nomePlano}</span>
             </div>
             <p style={styles.planDesc}>Plano Atual</p>
-            <button onClick={() => navigate("/planos")} style={styles.planBtn}>
-              Mudar de Plano
-            </button>
+            <button onClick={() => navigate("/planos")} style={styles.planBtn}>Mudar de Plano</button>
           </div>
         </div>
-
       </aside>
 
       <main className="main-content" style={{ ...styles.mainContent, padding: abaAtiva === "Sessões Ativas" ? "0" : "40px 60px" }}>
         
         {abaAtiva !== "Sessões Ativas" && (
-          <header className="header" style={styles.header}>
+          <header className="header-dashboard" style={styles.header}>
             <h1 className="page-title" style={styles.pageTitle}>{abaAtiva}</h1>
             <div className="header-actions" style={styles.headerActions}>
               <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
@@ -213,18 +207,12 @@ export default function PainelTarologo() {
         {abaAtiva === "Fila Expressa" && (
           <div style={styles.sectionContainer}>
             <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <p style={{ color: '#A89C92', fontSize: '15px' }}>
-                Atendimentos aguardando um oraculista disponível. Aceite para iniciar o chat.
-              </p>
-              <div style={styles.onlineStatusBadge}>
-                <div style={styles.dotOnline}></div> Você está Online
-              </div>
+              <p style={{ color: '#A89C92', fontSize: '15px' }}>Atendimentos aguardando um oraculista disponível.</p>
+              <div style={styles.onlineStatusBadge}><div style={styles.dotOnline}></div> Você está Online</div>
             </div>
             
             {loading ? (
-               <div style={{display: 'flex', justifyContent: 'center', padding: '60px'}}>
-                 <Loader2 size={32} color="#D4AF37" style={{ animation: "spin 1s linear infinite" }} />
-               </div>
+               <div style={{display: 'flex', justifyContent: 'center', padding: '60px'}}><Loader2 size={32} color="#D4AF37" style={{ animation: "spin 1s linear infinite" }} /></div>
             ) : filaExpressa.length === 0 ? (
                <div style={styles.emptyFilaBox}>
                  <Search size={32} color="#3A322C" style={{marginBottom: '12px'}}/>
@@ -234,42 +222,28 @@ export default function PainelTarologo() {
               <div className="grid-mobile" style={styles.filaGrid}>
                 {filaExpressa.map((pedido) => (
                   <div key={pedido.id} style={styles.pedidoCard}>
-                    
                     <div style={styles.pedidoHeader}>
                       <span style={styles.pedidoPriceBadge}>R$ 35,00</span>
-                      <span style={styles.pedidoTempo}>
-                        <Clock size={12} /> {pedido.hora_formatada}
-                      </span>
+                      <span style={styles.pedidoTempo}><Clock size={12} /> {pedido.hora_formatada}</span>
                     </div>
-                    
                     <div style={styles.pedidoUserSection}>
                       <h4 style={styles.pedidoConsulente}>{pedido.consulente_nome}</h4>
-                      <span style={styles.tagEnergia}>
-                        <Sparkles size={12} color="#D4AF37"/> Energia: {extrairEnergia(pedido.contexto)}
-                      </span>
+                      <span style={styles.tagEnergia}><Sparkles size={12} color="#D4AF37"/> Energia: {extrairEnergia(pedido.contexto)}</span>
                     </div>
-
                     <hr style={styles.pedidoDivider} />
-
                     <div style={styles.pedidoContentSection}>
                       <div style={styles.duvidaBox}>
                         <span style={styles.labelCurta}>A Questão do Consulente:</span>
                         <p style={styles.pedidoPergunta}>"{pedido.pergunta_principal}"</p>
                       </div>
-                      
                       {extrairContextoLimpo(pedido.contexto) && (
                         <div style={styles.contextoBox}>
                           <span style={styles.labelCurta}>Contexto Adicional:</span>
-                          <p style={styles.pedidoContexto}>
-                            {extrairContextoLimpo(pedido.contexto)}
-                          </p>
+                          <p style={styles.pedidoContexto}>{extrairContextoLimpo(pedido.contexto)}</p>
                         </div>
                       )}
                     </div>
-                    
-                    <button onClick={() => aceitarPedido(pedido.id)} style={styles.btnAceitar}>
-                      <Check size={16} /> Iniciar Leitura
-                    </button>
+                    <button onClick={() => aceitarPedido(pedido.id)} style={styles.btnAceitar}><Check size={16} /> Iniciar Leitura</button>
                   </div>
                 ))}
               </div>
@@ -277,10 +251,9 @@ export default function PainelTarologo() {
           </div>
         )}
 
+        {/* O SEGREDO DO APP NATIVO PARA O GUIA */}
         {abaAtiva === "Sessões Ativas" && (
-          <div style={{ height: '100vh', width: '100%', overflow: 'hidden' }}>
-              <Mensagens customStyle={{ margin: 0, height: '100vh', borderTop: 'none' }} />
-          </div>
+           <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Fila Expressa')} />
         )}
 
         {abaAtiva === "Minha Agenda" && <AgendaTarologo />}
@@ -289,12 +262,8 @@ export default function PainelTarologo() {
         {abaAtiva === "Meu Perfil" && (
           <div className="grid-mobile" style={styles.profileContainer}>
             <div style={styles.cardSettings}>
-              
               <h3 style={styles.sectionTitle}>Dados de Acesso</h3>
-              <p style={{ color: "#A89C92", fontSize: "13px", marginBottom: "24px" }}>
-                Estes dados são protegidos e usados para faturamento e login.
-              </p>
-
+              <p style={{ color: "#A89C92", fontSize: "13px", marginBottom: "24px" }}>Estes dados são protegidos e usados para faturamento e login.</p>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Nome Completo</label>
                 <div style={styles.inputWrapperDisabled}>
@@ -302,7 +271,6 @@ export default function PainelTarologo() {
                   <input type="text" value={nomeUsuario} disabled style={styles.inputDisabled} />
                 </div>
               </div>
-
               <div style={styles.formGroup}>
                 <label style={styles.label}>E-mail Cadastrado</label>
                 <div style={styles.inputWrapperDisabled}>
@@ -310,64 +278,30 @@ export default function PainelTarologo() {
                   <input type="email" value={emailUsuario} disabled style={styles.inputDisabled} />
                 </div>
               </div>
-
               <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '24px 0' }} />
-
               <h3 style={styles.sectionTitle}>Vitrine do Guia (Público)</h3>
-              
               <form onSubmit={handleAtualizarVitrine} style={styles.form}>
-                
                 <div className="header" style={styles.avatarContainer}>
                   <div style={styles.avatarWrapper} onClick={() => fileInputRef.current.click()}>
-                    {fotoPreview ? (
-                      <img src={fotoPreview} alt="Sua foto de perfil" style={styles.avatarImage} />
-                    ) : (
-                      <div style={styles.avatarPlaceholder}>
-                        <Camera size={32} color="#786C63" />
-                      </div>
-                    )}
-                    <div style={styles.avatarOverlay}>
-                      <Camera size={24} color="#FDFBF7" />
-                    </div>
+                    {fotoPreview ? <img src={fotoPreview} alt="Sua foto de perfil" style={styles.avatarImage} /> : <div style={styles.avatarPlaceholder}><Camera size={32} color="#786C63" /></div>}
+                    <div style={styles.avatarOverlay}><Camera size={24} color="#FDFBF7" /></div>
                   </div>
                   <div style={styles.avatarText}>
                     <h4 style={styles.avatarTitle}>Foto do Perfil Público</h4>
-                    <p style={styles.avatarSubtitle}>Use uma foto que transmita acolhimento (JPG/PNG).</p>
+                    <p style={styles.avatarSubtitle}>Use uma foto que transmita acolhimento.</p>
                   </div>
-                  <input 
-                    type="file" 
-                    accept="image/png, image/jpeg" 
-                    ref={fileInputRef} 
-                    onChange={handleFotoChange}
-                    style={{ display: 'none' }} 
-                  />
+                  <input type="file" accept="image/png, image/jpeg" ref={fileInputRef} onChange={handleFotoChange} style={{ display: 'none' }} />
                 </div>
-
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Especialidade Principal</label>
-                  <input 
-                    type="text" 
-                    value={perfil.especialidade}
-                    onChange={(e) => setPerfil({...perfil, especialidade: e.target.value})}
-                    style={styles.input} 
-                  />
+                  <input type="text" value={perfil.especialidade} onChange={(e) => setPerfil({...perfil, especialidade: e.target.value})} style={styles.input} />
                 </div>
-
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Biografia e Metodologia</label>
-                  <textarea 
-                    value={perfil.biografia}
-                    onChange={(e) => setPerfil({...perfil, biografia: e.target.value})}
-                    placeholder="Conte aos consulentes como funciona a sua leitura..."
-                    style={styles.textarea}
-                  ></textarea>
+                  <textarea value={perfil.biografia} onChange={(e) => setPerfil({...perfil, biografia: e.target.value})} placeholder="Conte aos consulentes..." style={styles.textarea}></textarea>
                 </div>
-
-                <button type="submit" style={styles.btnSalvar} disabled={salvando}>
-                  {salvando ? "Atualizando..." : "Atualizar Vitrine"}
-                </button>
+                <button type="submit" style={styles.btnSalvar} disabled={salvando}>{salvando ? "Atualizando..." : "Atualizar Vitrine"}</button>
               </form>
-
             </div>
           </div>
         )}
@@ -432,7 +366,6 @@ const styles = {
   form: { display: "flex", flexDirection: "column", gap: "24px" },
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
   label: { color: "#A89C92", fontSize: "13px", fontWeight: "500" },
-  
   avatarContainer: { display: "flex", alignItems: "center", gap: "20px", paddingBottom: "20px" },
   avatarWrapper: { position: "relative", width: "80px", height: "80px", borderRadius: "50%", cursor: "pointer", overflow: "hidden", border: "2px solid #3A322C", backgroundColor: "#110F0E" },
   avatarImage: { width: "100%", height: "100%", objectFit: "cover" },

@@ -38,10 +38,7 @@ const DashboardTarot = () => {
         ]);
         
         setTarologos(resTarologos.data);
-        
-        if (resPerfil.data.nome_plano_atual) {
-            setNomePlano(resPerfil.data.nome_plano_atual);
-        }
+        if (resPerfil.data.nome_plano_atual) setNomePlano(resPerfil.data.nome_plano_atual);
       } catch (error) {
         console.error("Erro ao carregar o dashboard:", error);
       } finally {
@@ -69,24 +66,21 @@ const DashboardTarot = () => {
     }
     const inicial = guia.user?.first_name ? guia.user.first_name.charAt(0).toUpperCase() : "G";
     return (
-      <div style={styles.fallbackGuiaAvatar}>
-        {inicial}
-      </div>
+      <div style={styles.fallbackGuiaAvatar}>{inicial}</div>
     );
   };
 
   return (
-    <div className="app-container" style={styles.appContainer}>
+    <div className={`app-container ${abaAtiva === 'Mensagens' ? 'app-modo-chat' : ''}`} style={styles.appContainer}>
       
-      <aside className="sidebar" style={styles.sidebar}>
+      <aside className="sidebar-dashboard" style={styles.sidebar}>
         <div style={styles.logoContainer}>
           <Moon size={28} color="#D4AF37" />
           <h2 style={styles.logoText}>Arcanum</h2>
         </div>
 
         <button onClick={() => mudarAba("Tiragem Expressa")} style={styles.btnAgendarSidebar}>
-          <CalendarPlus size={18} />
-          AGENDAR TIRAGEM
+          <CalendarPlus size={18} /> AGENDAR TIRAGEM
         </button>
 
         <nav style={styles.navMenu}>
@@ -114,36 +108,35 @@ const DashboardTarot = () => {
               <span style={styles.planTitle}>{nomePlano}</span>
             </div>
             <p style={styles.planDesc}>Plano Atual</p>
-            <button onClick={() => navigate("/planos")} style={styles.planBtn}>
-              Gerenciar Planos
-            </button>
+            <button onClick={() => navigate("/planos")} style={styles.planBtn}>Gerenciar Planos</button>
           </div>
         </div>
       </aside>
 
-      <main className="main-content" style={styles.mainContent}>
-        <header className="header" style={styles.header}>
-          <div style={styles.breadcrumb}>
-            <span style={styles.breadcrumbLink}>Arcanum</span>
-            <span style={styles.breadcrumbSeparator}>/</span>
-            <span style={styles.breadcrumbActive}>
-              {tarologoSelecionado ? "Perfil do Guia" : abaAtiva}
-            </span>
-          </div>
-
-          <div className="header-actions" style={styles.headerActions}>
-            <div className="search-container" style={styles.searchContainer}>
-              <Search size={16} color="#786C63" style={styles.searchIcon} />
-              <input type="text" placeholder="Buscar guias, especialidades..." style={styles.searchInput} value={busca} onChange={(e) => setBusca(e.target.value)} />
+      <main className="main-content" style={{ ...styles.mainContent, padding: abaAtiva === "Mensagens" ? "0" : "32px 60px" }}>
+        
+        {abaAtiva !== "Mensagens" && (
+          <header className="header-dashboard" style={styles.header}>
+            <div style={styles.breadcrumb}>
+              <span style={styles.breadcrumbLink}>Arcanum</span>
+              <span style={styles.breadcrumbSeparator}>/</span>
+              <span style={styles.breadcrumbActive}>{tarologoSelecionado ? "Perfil do Guia" : abaAtiva}</span>
             </div>
-            <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
-            <button onClick={() => mudarAba("Minha Conta")} style={styles.userProfileBtn}>
-              <div style={styles.userAvatar}>{nomeUsuario.charAt(0).toUpperCase()}</div>
-              <span style={styles.userName}>{nomeUsuario}</span>
-              <ChevronDown size={14} color="#786C63" />
-            </button>
-          </div>
-        </header>
+
+            <div className="header-actions" style={styles.headerActions}>
+              <div className="search-container" style={styles.searchContainer}>
+                <Search size={16} color="#786C63" style={styles.searchIcon} />
+                <input type="text" placeholder="Buscar guias..." style={styles.searchInput} value={busca} onChange={(e) => setBusca(e.target.value)} />
+              </div>
+              <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
+              <button onClick={() => mudarAba("Minha Conta")} style={styles.userProfileBtn}>
+                <div style={styles.userAvatar}>{nomeUsuario.charAt(0).toUpperCase()}</div>
+                <span style={styles.userName}>{nomeUsuario}</span>
+                <ChevronDown size={14} color="#786C63" />
+              </button>
+            </div>
+          </header>
+        )}
 
         {tarologoSelecionado ? (
           <PerfilTarologo tarologo={tarologoSelecionado} onVoltar={() => setTarologoSelecionado(null)} />
@@ -159,25 +152,17 @@ const DashboardTarot = () => {
                 <div className="grid-mobile" style={styles.intentionsGrid}>
                   <div className="grid-mobile" style={styles.areaCardsContainer}>
                     <div onClick={() => mudarAba("Tiragem Expressa")} style={styles.areaCard}>
-                      <div style={{...styles.areaIconBox, backgroundColor: "rgba(239, 68, 68, 0.1)"}}>
-                        <Heart size={24} color="#ef4444" />
-                      </div>
+                      <div style={{...styles.areaIconBox, backgroundColor: "rgba(239, 68, 68, 0.1)"}}><Heart size={24} color="#ef4444" /></div>
                       <h4 style={styles.areaTitle}>Amor & Relações</h4>
                       <p style={styles.areaDesc}>Desvende os laços do coração.</p>
                     </div>
-
                     <div onClick={() => mudarAba("Tiragem Expressa")} style={styles.areaCard}>
-                      <div style={{...styles.areaIconBox, backgroundColor: "rgba(59, 130, 246, 0.1)"}}>
-                        <Briefcase size={24} color="#3b82f6" />
-                      </div>
+                      <div style={{...styles.areaIconBox, backgroundColor: "rgba(59, 130, 246, 0.1)"}}><Briefcase size={24} color="#3b82f6" /></div>
                       <h4 style={styles.areaTitle}>Carreira & Finanças</h4>
                       <p style={styles.areaDesc}>Direcionamento profissional.</p>
                     </div>
-
                     <div onClick={() => mudarAba("Tiragem Expressa")} style={styles.areaCard}>
-                      <div style={{...styles.areaIconBox, backgroundColor: "rgba(168, 85, 247, 0.1)"}}>
-                        <Compass size={24} color="#a855f7" />
-                      </div>
+                      <div style={{...styles.areaIconBox, backgroundColor: "rgba(168, 85, 247, 0.1)"}}><Compass size={24} color="#a855f7" /></div>
                       <h4 style={styles.areaTitle}>Destino & Karma</h4>
                       <p style={styles.areaDesc}>Seu propósito espiritual.</p>
                     </div>
@@ -185,21 +170,15 @@ const DashboardTarot = () => {
 
                   <div style={styles.iaBanner}>
                     <div className="grid-mobile" style={styles.iaBannerContent}>
-                      <div style={styles.iaIconWrapper}>
-                        <Bot size={28} color="#151312" />
-                      </div>
+                      <div style={styles.iaIconWrapper}><Bot size={28} color="#151312" /></div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                           <h3 style={styles.iaTitle}>Concierge Arcanum</h3>
                           <span style={styles.tagConstrucao}>Em Construção</span>
                         </div>
-                        <p style={styles.iaDesc}>
-                          Nossa IA que analisa sua energia e encontra o oraculista ideal estará disponível assim que o círculo de guias se expandir.
-                        </p>
+                        <p style={styles.iaDesc}>Nossa IA que analisa sua energia e encontra o oraculista ideal estará disponível assim que o círculo se expandir.</p>
                       </div>
-                      <button disabled style={styles.btnIaBloqueado}>
-                        <Lock size={16} /> Disponível em Breve
-                      </button>
+                      <button disabled style={styles.btnIaBloqueado}><Lock size={16} /> Disponível em Breve</button>
                     </div>
                   </div>
                 </div>
@@ -207,18 +186,17 @@ const DashboardTarot = () => {
                 <div style={styles.listSection}>
                   <div className="header" style={styles.listHeader}>
                     <h3 className="page-title" style={styles.sectionTitle}>Guias Espirituais em Destaque</h3>
-                    <button style={styles.linkBtn}>Ver o Círculo Completo <ChevronRight size={16} /></button>
+                    <button style={styles.linkBtn}>Ver o Círculo <ChevronRight size={16} /></button>
                   </div>
 
                   {loading ? (
                     <p style={{ color: '#A89C92' }}>Invocando dados dos guias...</p>
                   ) : tarologos.length === 0 ? (
-                    <p style={{ color: '#A89C92' }}>Nenhum guia cadastrado no momento. O círculo está se formando.</p>
+                    <p style={{ color: '#A89C92' }}>Nenhum guia cadastrado no momento.</p>
                   ) : (
                     <div className="grid-mobile" style={styles.tarologosGrid}>
                       {tarologos.map((guia) => (
                         <div key={guia.id} onClick={() => setTarologoSelecionado(guia)} style={styles.guiaCard}>
-                          
                           <div style={styles.guiaImageWrapper}>
                             {renderAvatarVitrine(guia)}
                             <div style={styles.guiaImageGradient}></div>
@@ -226,7 +204,6 @@ const DashboardTarot = () => {
                               <Star size={12} fill="#D4AF37" color="#D4AF37" /> {guia.nota_media}
                             </div>
                           </div>
-                          
                           <div style={styles.guiaInfo}>
                             <p style={styles.guiaSpec}>{guia.especialidade}</p>
                             <h4 style={styles.guiaNameGrid}>{guia.user?.first_name}</h4>
@@ -246,7 +223,12 @@ const DashboardTarot = () => {
             {abaAtiva === "Tiragem Expressa" && <TiragemExpressa />}
             {abaAtiva === "Minha Conta" && <PerfilUsuario />}
             {abaAtiva === "Tiragens Agendadas" && <TiragensAgendadas mudarAba={mudarAba} />}
-            {abaAtiva === "Mensagens" && <Mensagens />}
+            
+            {/* O SEGREDO DO MODO NATIVO ESTÁ AQUI */}
+            {abaAtiva === "Mensagens" && (
+              <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Visão Geral')} />
+            )}
+            
             {abaAtiva === "Registros Akáshicos" && <RegistrosAkashicos />}
             {abaAtiva === "Ajuda e Suporte" && <Suporte />} 
           </>
@@ -258,9 +240,7 @@ const DashboardTarot = () => {
 
 const NavItem = ({ icon, label, ativo, onClick }) => (
   <div onClick={onClick} style={{ ...styles.navItem, ...(ativo ? styles.navItemAtivo : {}) }}>
-    <div style={{ color: ativo ? "#D4AF37" : "#786C63", display: "flex", alignItems: "center" }}>
-      {icon}
-    </div>
+    <div style={{ color: ativo ? "#D4AF37" : "#786C63", display: "flex", alignItems: "center" }}>{icon}</div>
     <span style={{ ...styles.navItemText, color: ativo ? "#FDFBF7" : "#A89C92" }}>{label}</span>
   </div>
 );
