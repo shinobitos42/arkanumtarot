@@ -9,6 +9,7 @@ import api from "../services/api";
 import Mensagens from "./Mensagens"; 
 import AgendaTarologo from "./AgendaTarologo";
 import FinancasTarologo from "./FinancasTarologo";
+import AgendamentosTarologo from "./AgendamentosTarologo"; // <-- IMPORTAÇÃO CORRETA AQUI
 
 export default function PainelTarologo() {
   const navigate = useNavigate();
@@ -28,10 +29,7 @@ export default function PainelTarologo() {
   const [estatisticas, setEstatisticas] = useState({ saldo: "0,00", tiragens: 0, consulentes: 0, nota: 5.0 });
   const [filaExpressa, setFilaExpressa] = useState([]);
   
-  // DADOS DO PERFIL
   const [perfil, setPerfil] = useState({ especialidade: "", biografia: "" });
-  
-  // NOVO: CARDÁPIO DE TIRAGENS E VALORES
   const [tiposTiragem, setTiposTiragem] = useState([]);
   const [novoServicoNome, setNovoServicoNome] = useState("");
   const [novoServicoValor, setNovoServicoValor] = useState("");
@@ -56,11 +54,9 @@ export default function PainelTarologo() {
           biografia: resPerfil.data.tarologo_profile?.biografia || ""
         });
         
-        // Puxa os serviços customizados do banco (ou inicia um cardápio padrão)
         if (resPerfil.data.tarologo_profile?.tipos_tiragem && resPerfil.data.tarologo_profile.tipos_tiragem.length > 0) {
             setTiposTiragem(resPerfil.data.tarologo_profile.tipos_tiragem);
         } else {
-            // Se ele nunca criou, damos sugestões base
             setTiposTiragem([{ id: 1, nome: "Tiragem Objetiva", valor: "35.00" }]);
         }
 
@@ -108,7 +104,6 @@ export default function PainelTarologo() {
     if (file) { setFotoFile(file); setFotoPreview(URL.createObjectURL(file)); }
   };
 
-  // ADICIONAR E REMOVER SERVIÇOS (TIRAGENS)
   const adicionarServico = () => {
     if (!novoServicoNome || !novoServicoValor) return;
     const novo = { id: Date.now(), nome: novoServicoNome, valor: parseFloat(novoServicoValor).toFixed(2) };
@@ -129,7 +124,6 @@ export default function PainelTarologo() {
     if (fotoFile) formData.append('foto_perfil', fotoFile);
     formData.append('especialidade', perfil.especialidade);
     formData.append('biografia', perfil.biografia);
-    // Transforma o array de serviços em texto para enviar ao Django
     formData.append('tipos_tiragem', JSON.stringify(tiposTiragem));
 
     try {
@@ -166,7 +160,10 @@ export default function PainelTarologo() {
           <p style={styles.navLabel}>MEU TRABALHO</p>
           <NavItem icon={<Zap size={20} />} label="Fila Expressa" ativo={abaAtiva === "Fila Expressa"} onClick={() => mudarAba("Fila Expressa")} />
           <NavItem icon={<MessageCircle size={20} />} label="Sessões Ativas" ativo={abaAtiva === "Sessões Ativas"} onClick={() => mudarAba("Sessões Ativas")} />
-          <NavItem icon={<CalendarDays size={20} />} label="Minha Agenda" ativo={abaAtiva === "Minha Agenda"} onClick={() => mudarAba("Minha Agenda")} />
+          
+          {/* A ROTA NOVA DO ARQUIVO EXCLUSIVO ADICIONADA AQUI */}
+          <NavItem icon={<CalendarDays size={20} />} label="Leituras Agendadas" ativo={abaAtiva === "Agendamentos"} onClick={() => mudarAba("Agendamentos")} />
+          <NavItem icon={<Clock size={20} />} label="Minha Agenda" ativo={abaAtiva === "Minha Agenda"} onClick={() => mudarAba("Minha Agenda")} />
           
           <div style={{ marginTop: '16px' }}></div>
           <p style={styles.navLabel}>ADMINISTRAÇÃO</p>
@@ -264,6 +261,11 @@ export default function PainelTarologo() {
            <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Fila Expressa')} />
         )}
 
+        {/* ============================================================== */}
+        {/* COMPONENTE EXCLUSIVO DO TARÓLOGO RENDERIZADO AQUI */}
+        {/* ============================================================== */}
+        {abaAtiva === "Agendamentos" && <AgendamentosTarologo onIniciarSessao={(id) => mudarAba('Sessões Ativas')} />}
+        
         {abaAtiva === "Minha Agenda" && <AgendaTarologo />}
         {abaAtiva === "Finanças" && <FinancasTarologo estatisticas={estatisticas} />}
 
@@ -412,7 +414,6 @@ const styles = {
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
   label: { color: "#A89C92", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" },
   
-  // CARDÁPIO DE SERVIÇOS
   servicosList: { display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" },
   servicoItem: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#110F0E", padding: "16px", borderRadius: "8px", border: "1px solid #2A2420" },
   servicoInfo: { display: "flex", flexDirection: "column", gap: "4px" },

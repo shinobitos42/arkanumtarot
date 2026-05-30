@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, User, MessageCircle, Play, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, Play, Loader2 } from 'lucide-react';
 import api from '../services/api';
 
 export default function AgendamentosTarologo({ onIniciarSessao }) {
@@ -9,9 +9,10 @@ export default function AgendamentosTarologo({ onIniciarSessao }) {
   useEffect(() => {
     const buscarAgendamentos = async () => {
       try {
-        // Busca sessões que já estão pagas e agendadas para o futuro
-        const response = await api.get('tiragens/sessoes/?status=agendado');
-        setAgendamentos(response.data);
+        // Busca todas as sessões e filtra as que estão agendadas para o futuro
+        const response = await api.get('tiragens/sessoes/');
+        const sessoesFuturas = response.data.filter(s => s.status_sessao === 'agendada');
+        setAgendamentos(sessoesFuturas);
       } catch (error) {
         console.error("Erro ao buscar agendamentos:", error);
       } finally {
@@ -24,7 +25,7 @@ export default function AgendamentosTarologo({ onIniciarSessao }) {
 
   return (
     <div style={styles.container}>
-      <div className="header" style={styles.header}>
+      <div className="header-mobile-col" style={styles.header}>
         <div>
           <h3 style={styles.title}>Próximas Leituras</h3>
           <p style={styles.subtitle}>Sessões agendadas e já confirmadas pelos consulentes.</p>
@@ -47,21 +48,25 @@ export default function AgendamentosTarologo({ onIniciarSessao }) {
               <div style={styles.cardHeader}>
                 <div style={styles.dateTag}>
                   <CalendarIcon size={14} color="#D4AF37" />
-                  <span>{sessao.data_agendada}</span>
+                  <span>{sessao.data_agendada_formatada || sessao.data_agendada}</span>
                 </div>
                 <div style={styles.timeTag}>
                   <Clock size={14} color="#D4AF37" />
-                  <span>{sessao.hora_agendada}</span>
+                  <span>{sessao.hora_agendada_formatada || sessao.hora_agendada}</span>
                 </div>
               </div>
 
               <div style={styles.consulenteInfo}>
                 <div style={styles.avatarPlaceholder}>
-                  <User size={20} color="#786C63" />
+                  {sessao.consulente_img ? (
+                    <img src={sessao.consulente_img} alt="Avatar" style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}} />
+                  ) : (
+                    <User size={20} color="#786C63" />
+                  )}
                 </div>
                 <div>
-                  <h4 style={styles.consulenteName}>{sessao.consulente_nome}</h4>
-                  <p style={styles.consulenteEnergia}>Energia: {sessao.tipo_leitura}</p>
+                  <h4 style={styles.consulenteName}>{sessao.consulente_nome || "Consulente Oculto"}</h4>
+                  <p style={styles.consulenteEnergia}>Tipo: {sessao.tipo_leitura || sessao.tipo}</p>
                 </div>
               </div>
 
@@ -70,12 +75,11 @@ export default function AgendamentosTarologo({ onIniciarSessao }) {
                 <p style={styles.pergunta}>"{sessao.pergunta_principal}"</p>
               </div>
 
-              {/* O botão fica inativo até o horário chegar (lógica visual) */}
               <button 
                 onClick={() => onIniciarSessao(sessao.id)}
                 style={styles.btnIniciar}
               >
-                <Play size={16} /> Entrar na Sala de Leitura
+                <Play size={16} fill="#D4AF37" /> Entrar na Sala de Leitura
               </button>
             </div>
           ))}
@@ -102,7 +106,7 @@ const styles = {
   
   consulenteInfo: { display: "flex", alignItems: "center", gap: "12px" },
   avatarPlaceholder: { width: "40px", height: "40px", borderRadius: "50%", backgroundColor: "#110F0E", border: "1px solid #3A322C", display: "flex", alignItems: "center", justifyContent: "center" },
-  consulenteName: { color: "#FDFBF7", fontSize: "16px", fontFamily: "'Playfair Display', serif" },
+  consulenteName: { color: "#FDFBF7", fontSize: "16px", fontFamily: "'Playfair Display', serif", textTransform: 'capitalize' },
   consulenteEnergia: { color: "#786C63", fontSize: "12px", marginTop: "2px" },
   
   duvidaBox: { backgroundColor: "#1A1715", padding: "16px", borderRadius: "8px", borderLeft: "2px solid #D4AF37" },
