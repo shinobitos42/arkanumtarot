@@ -9,7 +9,8 @@ import api from "../services/api";
 import Mensagens from "./Mensagens"; 
 import AgendaTarologo from "./AgendaTarologo";
 import FinancasTarologo from "./FinancasTarologo";
-import AgendamentosTarologo from "./AgendamentosTarologo"; // <-- COMPONENTE EXCLUSIVO DO TARÓLOGO
+// COMPONENTE EXCLUSIVO DO TARÓLOGO IMPORTADO
+import AgendamentosTarologo from "./AgendamentosTarologo"; 
 
 export default function PainelTarologo() {
   const navigate = useNavigate();
@@ -99,6 +100,17 @@ export default function PainelTarologo() {
     } catch (error) { alert("Houve um erro ao aceitar a sessão. Outro guia já pode ter assumido."); }
   };
 
+  // NOVA FUNÇÃO: Iniciar a sessão que estava agendada
+  const iniciarSessaoAgendada = async (sessaoId) => {
+    try {
+      await api.patch(`tiragens/sessoes/${sessaoId}/`, { status_sessao: 'ao_vivo' });
+      mudarAba("Sessões Ativas"); 
+    } catch (error) { 
+      alert("Houve um erro ao iniciar a sessão agendada."); 
+      console.error(error);
+    }
+  };
+
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
     if (file) { setFotoFile(file); setFotoPreview(URL.createObjectURL(file)); }
@@ -161,7 +173,7 @@ export default function PainelTarologo() {
           <NavItem icon={<Zap size={20} />} label="Fila Expressa" ativo={abaAtiva === "Fila Expressa"} onClick={() => mudarAba("Fila Expressa")} />
           <NavItem icon={<MessageCircle size={20} />} label="Sessões Ativas" ativo={abaAtiva === "Sessões Ativas"} onClick={() => mudarAba("Sessões Ativas")} />
           
-          {/* A ROTA NOVA DO ARQUIVO EXCLUSIVO ADICIONADA AQUI */}
+          {/* MENU PARA AGENDAMENTOS INTEGRADO */}
           <NavItem icon={<CalendarDays size={20} />} label="Leituras Agendadas" ativo={abaAtiva === "Agendamentos"} onClick={() => mudarAba("Agendamentos")} />
           
           <NavItem icon={<Clock size={20} />} label="Minha Agenda" ativo={abaAtiva === "Minha Agenda"} onClick={() => mudarAba("Minha Agenda")} />
@@ -265,7 +277,9 @@ export default function PainelTarologo() {
         {/* ============================================================== */}
         {/* COMPONENTE EXCLUSIVO DO TARÓLOGO RENDERIZADO AQUI */}
         {/* ============================================================== */}
-        {abaAtiva === "Agendamentos" && <AgendamentosTarologo onIniciarSessao={(id) => mudarAba('Sessões Ativas')} />}
+        {abaAtiva === "Agendamentos" && (
+          <AgendamentosTarologo onIniciarSessao={iniciarSessaoAgendada} />
+        )}
         
         {abaAtiva === "Minha Agenda" && <AgendaTarologo />}
         {abaAtiva === "Finanças" && <FinancasTarologo estatisticas={estatisticas} />}
