@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Moon, X, Menu } from "lucide-react";
-
-// CORREÇÃO 1: Se ambos estão na pasta components, a importação é com "./"
 import "./Navbar.css"; 
 
 export default function Navbar() {
@@ -25,28 +23,39 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
-  // CORREÇÃO 2 (Opcional): Se "O Espaço" for para rolar a página inicial,
-  // uma âncora simples com scroll para o topo ajuda caso a pessoa já esteja na Home.
-  const handleScrollToTop = () => {
+  // FUNÇÃO MÁGICA: Faz a tela rolar suavemente até a seção dos Pilares
+  const scrollToEspaco = (e) => {
+    // Só previne o comportamento padrão se já estivermos na Home
     if (location.pathname === "/") {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      e.preventDefault();
+      const secao = document.getElementById("espaco");
+      if (secao) {
+        secao.scrollIntoView({ behavior: "smooth" });
+        setMenuOpen(false); // Fecha o menu no celular após o clique
+      }
     }
   };
 
   return (
     <>
       {/* ── BARRA ── */}
-      {/* Adicionei um zIndex inline de segurança, caso seu CSS falhe */}
       <nav className={`ark-nav${scrolled ? " ark-nav--scrolled" : ""}`} style={{ position: 'fixed', top: 0, width: '100%', zIndex: 9999 }}>
-        <Link to="/" className="ark-logo" onClick={handleScrollToTop}>
+        <Link to="/" className="ark-logo">
           <Moon size={22} color="#D4AF37" className="ark-logo__icon" />
           <span className="ark-logo__text">Arkanum</span>
         </Link>
 
         {/* Links centrais — só desktop */}
         <div className="ark-links">
-          <Link to="/" className="ark-link" onClick={handleScrollToTop}>O Espaço</Link>
-          <Link to="/tarologos" className="ark-link">Tarólogos</Link>
+          {/* Clicar em "O Espaço" agora ativa a rolagem suave */}
+          <Link to="/#espaco" className="ark-link" onClick={scrollToEspaco}>
+            O Espaço
+          </Link>
+          
+          {/* Como a página pública de Tarólogos não existe, leva para o cadastro para ver os guias */}
+          <Link to="/register" className="ark-link">
+            Tarólogos
+          </Link>
         </div>
 
         {/* CTA — só desktop */}
@@ -59,7 +68,7 @@ export default function Navbar() {
           className="ark-hamburger"
           onClick={() => setMenuOpen(v => !v)}
           aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-          style={{ zIndex: 10001 }} // Garante que o botão fique clicável acima do overlay
+          style={{ zIndex: 10001 }} 
         >
           {menuOpen
             ? <X size={22} color="#D4AF37" />
@@ -79,11 +88,11 @@ export default function Navbar() {
         <div className="ark-drawer__accent" />
 
         <nav className="ark-drawer__links">
-          <Link to="/" className="ark-drawer__link" onClick={handleScrollToTop}>
+          <Link to="/#espaco" className="ark-drawer__link" onClick={scrollToEspaco}>
             <span className="ark-drawer__dash" />
             O Espaço
           </Link>
-          <Link to="/tarologos" className="ark-drawer__link">
+          <Link to="/register" className="ark-drawer__link">
             <span className="ark-drawer__dash" />
             Tarólogos
           </Link>
