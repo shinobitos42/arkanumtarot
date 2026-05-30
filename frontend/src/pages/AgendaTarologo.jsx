@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { CalendarDays, Clock, Plus, Trash2, CalendarX2, ChevronDown, Settings2 } from 'lucide-react';
+import { CalendarDays, Clock, Plus, Trash2, CalendarX2, ChevronDown, Settings2, Loader2 } from 'lucide-react';
+import api from '../services/api'; // <--- IMPORTAÇÃO DA API ADICIONADA AQUI
 
 export default function AgendaTarologo() {
   // 1. CONFIGURAÇÕES GERAIS DA AGENDA
   const [duracaoSessao, setDuracaoSessao] = useState('30'); // Em minutos
   const [intervalo, setIntervalo] = useState('10'); // Pausa para água/respiro entre sessões
+
+  const [salvando, setSalvando] = useState(false); // Estado para o botão de salvar
 
   // 2. ESTADO DA ROTINA SEMANAL
   const [semana, setSemana] = useState([
@@ -72,10 +75,29 @@ export default function AgendaTarologo() {
     setNovaData('');
   };
 
-  const handleSalvarAgenda = () => {
-    const payload = { configuracao: { duracaoSessao, intervalo }, semana, datasExtras };
-    console.log("Enviando para o backend fatiar os horários:", payload);
-    alert("Agenda configurada! O sistema agora dividirá seus turnos automaticamente.");
+  const removerDataExtra = (idExcecao) => {
+    setDatasExtras(datasExtras.filter(ex => ex.id !== idExcecao));
+  };
+
+  // --- O GATILHO REAL PARA O BANCO DE DADOS ---
+  const handleSalvarAgenda = async () => {
+    setSalvando(true);
+    const payload = { 
+      configuracao: { duracaoSessao, intervalo }, 
+      semana, 
+      datasExtras 
+    };
+
+    try {
+      // Agora sim envia de verdade para a View do Django!
+      await api.post('users/me/agenda/', payload);
+      alert("Agenda salva com sucesso! O sistema fatiou seus turnos e já está visível para os consulentes.");
+    } catch (error) {
+      console.error("Erro ao salvar agenda:", error);
+      alert("Houve um erro ao salvar a agenda. Verifique sua conexão.");
+    } finally {
+      setSalvando(false);
+    }
   };
 
   // COMPONENTE CUSTOMIZADO DE SELECT PARA SUBSTITUIR O INPUT NATIVO FEIO
@@ -103,7 +125,6 @@ export default function AgendaTarologo() {
           </div>
         </div>
 
-        {/* Adicionado grid-mobile para empilhar no celular */}
         <div className="grid-mobile" style={styles.configGrid}>
           <div style={styles.formGroup}>
             <label style={styles.label}>Duração de cada Sessão</label>
@@ -142,7 +163,6 @@ export default function AgendaTarologo() {
 
         <div style={styles.semanaList}>
           {semana.map((dia, indexDia) => (
-            // Adicionado flexWrap para quebrar a linha do dia no celular
             <div key={dia.nome} style={{...styles.diaRow, opacity: dia.ativo ? 1 : 0.6}}>
               
               <div style={styles.diaToggle} onClick={() => toggleDiaSemana(indexDia)}>
@@ -157,7 +177,6 @@ export default function AgendaTarologo() {
               {dia.ativo ? (
                 <div style={styles.blocosContainer}>
                   {dia.blocos.map((bloco) => (
-                    // Adicionado flexWrap e width 100% no blocoRow
                     <div key={bloco.id} style={styles.blocoRow}>
                       
                       <CustomTimeSelect 
@@ -197,7 +216,6 @@ export default function AgendaTarologo() {
           Vai tirar férias ou feriado? Adicione a data aqui e bloquearemos a sua agenda inteira neste dia.
         </p>
 
-        {/* Adicionado grid-mobile para empilhar input e botão no celular */}
         <div className="grid-mobile" style={styles.addExcecaoBox}>
           <input 
             type="date" 
@@ -227,8 +245,12 @@ export default function AgendaTarologo() {
         )}
       </div>
 
-      <button onClick={handleSalvarAgenda} style={styles.btnSalvarPrincipal}>
-        Salvar Configurações de Agenda
+      <button onClick={handleSalvarAgenda} disabled={salvando} style={{...styles.btnSalvarPrincipal, opacity: salvando ? 0.7 : 1}}>
+        {salvando ? (
+          <><Loader2 size={18} style={{ animation: "spin 1s linear infinite", display: 'inline-block', verticalAlign: 'middle', marginRight: '8px' }} /> Salvando...</>
+        ) : (
+          "Salvar Configurações de Agenda"
+        )}
       </button>
 
     </div>
@@ -244,7 +266,7 @@ const Check = ({ size, color }) => (
 
 const styles = {
   container: { maxWidth: "800px", display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease" },
-  cardSettings: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "24px", boxSizing: "border-box" }, // Padding reduzido de 32 para 24
+  cardSettings: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "24px", boxSizing: "border-box" }, 
   headerComIcone: { display: "flex", gap: "16px", marginBottom: "24px", alignItems: "flex-start" },
   sectionTitle: { color: "#FDFBF7", fontSize: "20px", fontFamily: "'Playfair Display', serif", marginBottom: "8px" },
   subtitle: { color: "#A89C92", fontSize: "13px", lineHeight: "1.5" },
@@ -261,20 +283,20 @@ const styles = {
 
   // ROTINA SEMANAL
   semanaList: { display: "flex", flexDirection: "column", gap: "0" },
-  diaRow: { display: "flex", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", padding: "24px 0", borderBottom: "1px solid #2A2420", transition: "opacity 0.2s" }, // flexWrap para o mobile
+  diaRow: { display: "flex", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", padding: "24px 0", borderBottom: "1px solid #2A2420", transition: "opacity 0.2s" }, 
   diaToggle: { display: "flex", alignItems: "center", gap: "12px", minWidth: "120px", cursor: "pointer", paddingTop: "12px" },
   checkbox: { width: "20px", height: "20px", borderRadius: "6px", border: "2px solid #786C63", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s", flexShrink: 0 },
   checkboxAtivo: { backgroundColor: "#D4AF37", borderColor: "#D4AF37" },
   diaNome: { fontSize: "15px", fontWeight: "500", transition: "color 0.2s" },
   
   blocosContainer: { display: "flex", flexDirection: "column", gap: "12px", flex: 1, minWidth: "260px" },
-  blocoRow: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px", backgroundColor: "#110F0E", padding: "12px", borderRadius: "8px", border: "1px solid #1A1715", width: "100%", maxWidth: "fit-content", boxSizing: "border-box" }, // flexWrap para o celular
+  blocoRow: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px", backgroundColor: "#110F0E", padding: "12px", borderRadius: "8px", border: "1px solid #1A1715", width: "100%", maxWidth: "fit-content", boxSizing: "border-box" }, 
   btnIconDelete: { background: "none", border: "none", color: "#786C63", cursor: "pointer", padding: "8px", marginLeft: "auto", borderRadius: "4px", transition: "all 0.2s" },
   btnAddHorario: { display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: "#D4AF37", fontSize: "13px", fontWeight: "600", cursor: "pointer", padding: "8px 0", width: "fit-content", transition: "opacity 0.2s" },
   indisponivelText: { color: "#786C63", fontSize: "14px", fontStyle: "italic", paddingTop: "12px" },
 
   // DATAS ESPECÍFICAS
-  addExcecaoBox: { display: "flex", gap: "16px", marginBottom: "24px", alignItems: "center", flexWrap: "wrap" }, // flexWrap ativado
+  addExcecaoBox: { display: "flex", gap: "16px", marginBottom: "24px", alignItems: "center", flexWrap: "wrap" }, 
   inputDate: { backgroundColor: "#1A1715", border: "1px solid #3A322C", color: "#EAE0C8", padding: "12px 16px", borderRadius: "8px", outline: "none", fontSize: "14px", width: "100%", maxWidth: "300px", boxSizing: "border-box" },
   btnSecundario: { padding: "12px 24px", backgroundColor: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s", flex: 1, minWidth: "150px", textAlign: "center" },
   
