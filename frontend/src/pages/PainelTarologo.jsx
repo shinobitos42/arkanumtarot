@@ -9,7 +9,7 @@ import api from "../services/api";
 import Mensagens from "./Mensagens"; 
 import AgendaTarologo from "./AgendaTarologo";
 import FinancasTarologo from "./FinancasTarologo";
-import AgendamentosTarologo from "./AgendamentosTarologo"; // <-- IMPORTAÇÃO CORRETA AQUI
+import AgendamentosTarologo from "./AgendamentosTarologo"; // <-- COMPONENTE EXCLUSIVO DO TARÓLOGO
 
 export default function PainelTarologo() {
   const navigate = useNavigate();
@@ -163,6 +163,7 @@ export default function PainelTarologo() {
           
           {/* A ROTA NOVA DO ARQUIVO EXCLUSIVO ADICIONADA AQUI */}
           <NavItem icon={<CalendarDays size={20} />} label="Leituras Agendadas" ativo={abaAtiva === "Agendamentos"} onClick={() => mudarAba("Agendamentos")} />
+          
           <NavItem icon={<Clock size={20} />} label="Minha Agenda" ativo={abaAtiva === "Minha Agenda"} onClick={() => mudarAba("Minha Agenda")} />
           
           <div style={{ marginTop: '16px' }}></div>
