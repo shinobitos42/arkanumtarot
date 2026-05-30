@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Moon, X, Menu } from "lucide-react";
-import "../components/Navbar.css";
+
+// CORREÇÃO 1: Se ambos estão na pasta components, a importação é com "./"
+import "./Navbar.css"; 
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -23,18 +25,27 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  // CORREÇÃO 2 (Opcional): Se "O Espaço" for para rolar a página inicial,
+  // uma âncora simples com scroll para o topo ajuda caso a pessoa já esteja na Home.
+  const handleScrollToTop = () => {
+    if (location.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <>
       {/* ── BARRA ── */}
-      <nav className={`ark-nav${scrolled ? " ark-nav--scrolled" : ""}`}>
-        <Link to="/" className="ark-logo">
+      {/* Adicionei um zIndex inline de segurança, caso seu CSS falhe */}
+      <nav className={`ark-nav${scrolled ? " ark-nav--scrolled" : ""}`} style={{ position: 'fixed', top: 0, width: '100%', zIndex: 9999 }}>
+        <Link to="/" className="ark-logo" onClick={handleScrollToTop}>
           <Moon size={22} color="#D4AF37" className="ark-logo__icon" />
           <span className="ark-logo__text">Arkanum</span>
         </Link>
 
         {/* Links centrais — só desktop */}
         <div className="ark-links">
-          <Link to="/" className="ark-link">O Espaço</Link>
+          <Link to="/" className="ark-link" onClick={handleScrollToTop}>O Espaço</Link>
           <Link to="/tarologos" className="ark-link">Tarólogos</Link>
         </div>
 
@@ -48,6 +59,7 @@ export default function Navbar() {
           className="ark-hamburger"
           onClick={() => setMenuOpen(v => !v)}
           aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+          style={{ zIndex: 10001 }} // Garante que o botão fique clicável acima do overlay
         >
           {menuOpen
             ? <X size={22} color="#D4AF37" />
@@ -59,14 +71,15 @@ export default function Navbar() {
       <div
         className={`ark-overlay${menuOpen ? " ark-overlay--open" : ""}`}
         onClick={() => setMenuOpen(false)}
+        style={{ zIndex: 9998 }}
       />
 
       {/* ── DRAWER ── */}
-      <aside className={`ark-drawer${menuOpen ? " ark-drawer--open" : ""}`}>
+      <aside className={`ark-drawer${menuOpen ? " ark-drawer--open" : ""}`} style={{ zIndex: 10000 }}>
         <div className="ark-drawer__accent" />
 
         <nav className="ark-drawer__links">
-          <Link to="/" className="ark-drawer__link">
+          <Link to="/" className="ark-drawer__link" onClick={handleScrollToTop}>
             <span className="ark-drawer__dash" />
             O Espaço
           </Link>

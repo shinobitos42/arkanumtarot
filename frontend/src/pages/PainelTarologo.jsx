@@ -19,7 +19,8 @@ export default function PainelTarologo() {
   const [menuAberto, setMenuAberto] = useState(false); 
 
   const [nomeUsuario] = useState(localStorage.getItem('user_name') || 'Guia');
-  const [emailUsuario] = useState(localStorage.getItem('user_email') || 'oraculo@arcanum.com');
+  // CORREÇÃO: Adicionado o setEmailUsuario aqui
+  const [emailUsuario, setEmailUsuario] = useState(localStorage.getItem('user_email') || 'oraculo@arcanum.com');
   const [iniciais] = useState(nomeUsuario.substring(0, 2).toUpperCase());
 
   const [fotoFile, setFotoFile] = useState(null);
@@ -49,6 +50,12 @@ export default function PainelTarologo() {
       try {
         const resPerfil = await api.get('users/me/');
         if (resPerfil.data.nome_plano_atual) setNomePlano(resPerfil.data.nome_plano_atual);
+
+        // CORREÇÃO: Garantindo que o e-mail real do banco seja exibido e salvo no cache
+        if (resPerfil.data.email) {
+          setEmailUsuario(resPerfil.data.email);
+          localStorage.setItem('user_email', resPerfil.data.email);
+        }
 
         setPerfil({
           especialidade: resPerfil.data.tarologo_profile?.especialidade || "",
@@ -272,7 +279,6 @@ export default function PainelTarologo() {
            <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Fila Expressa')} />
         )}
 
-        {/* CORRIGIDO: Renderização agora no singular */}
         {abaAtiva === "Agendamentos" && (
           <AgendamentoTarologo onIniciarSessao={iniciarSessaoAgendada} />
         )}

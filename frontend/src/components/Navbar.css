@@ -4,9 +4,10 @@
 
 /* ── BARRA PRINCIPAL ── */
 .ark-nav {
-  position: sticky;
+  position: fixed; /* MUDANÇA: Evita o bug de anulação com o overflow-x: hidden */
   top: 0;
-  z-index: 200;
+  left: 0; /* Garante alinhamento total */
+  z-index: 9999; /* MUDANÇA: Z-index máximo para sempre ficar acima da gaveta e da página */
   width: 100%;
   box-sizing: border-box;
   padding: 1.1rem 5%;
@@ -112,7 +113,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0);
-  z-index: 199;
+  z-index: 9997; /* MUDANÇA: Abaixo da gaveta e da navbar */
   pointer-events: none;
   transition: background 0.35s;
   backdrop-filter: blur(0px);
@@ -133,10 +134,10 @@
   width: min(320px, 85vw);
   background: #151312;
   border-left: 1px solid #3A322C;
-  z-index: 300;
+  z-index: 9998; /* MUDANÇA: Fica abaixo da navbar (para o botão de X aparecer), mas acima do overlay */
   display: flex;
   flex-direction: column;
-  padding: 80px 32px 40px;
+  padding: 80px 32px 40px; /* Note o padding de 80px que empurra o conteúdo para baixo da nav perfeitamente */
   box-sizing: border-box;
   transform: translateX(100%);
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);

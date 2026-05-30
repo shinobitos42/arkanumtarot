@@ -3,9 +3,9 @@ import { BookOpen, Calendar, Search, ChevronRight, Loader2, Lock, Sparkles, Cloc
 import api from "../services/api";
 import html2pdf from "html2pdf.js";
 
-
 export default function RegistrosAkashicos() {
-  const [isPremium, setIsPremium] = useState(true);
+  // Como o site está publicado, cravamos o premium como true (ou passe via props/contexto futuramente)
+  const isPremium = true; 
   
   const [busca, setBusca] = useState("");
   const [registros, setRegistros] = useState([]);
@@ -67,11 +67,7 @@ export default function RegistrosAkashicos() {
   return (
     <div style={styles.container}>
       
-      <button onClick={() => setIsPremium(!isPremium)} style={styles.devBtn}>
-        Modo Dev: {isPremium ? "Premium" : "Gratuito"}
-      </button>
-
-      <div style={styles.header}>
+      <div className="header-mobile-col" style={styles.header}>
         <div style={styles.headerTitleBox}>
           <div style={styles.iconWrapper}>
             <BookOpen size={28} color="#D4AF37" />
@@ -96,7 +92,7 @@ export default function RegistrosAkashicos() {
         </div>
       </div>
 
-      <div style={styles.listContainer}>
+      <div className="grid-mobile" style={styles.listContainer}>
         {loading ? (
           <div style={styles.emptyState}>
             <Loader2 size={32} color="#D4AF37" style={{ animation: "spin 1s linear infinite" }} />
@@ -233,16 +229,15 @@ export default function RegistrosAkashicos() {
 
 const styles = {
   container: { display: "flex", flexDirection: "column", paddingBottom: "40px", position: "relative" },
-  devBtn: { position: 'absolute', top: '-10px', right: '0px', padding: '8px 16px', backgroundColor: '#3A322C', color: '#EAE0C8', border: 'none', borderRadius: '4px', cursor: 'pointer', zIndex: 100 },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "40px", flexWrap: "wrap", gap: "20px", marginTop: "20px" },
-  headerTitleBox: { display: "flex", alignItems: "center", gap: "20px", maxWidth: "600px" },
+  headerTitleBox: { display: "flex", alignItems: "center", gap: "20px", maxWidth: "600px", flexWrap: "wrap", justifyContent: "center" },
   iconWrapper: { width: "64px", height: "64px", borderRadius: "16px", backgroundColor: "rgba(212, 175, 55, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
   pageTitle: { fontSize: "32px", fontWeight: "normal", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontStyle: "italic", marginBottom: "8px" },
   pageSubtitle: { color: "#A89C92", fontSize: "14px", lineHeight: "1.6" },
-  searchBox: { position: "relative", width: "300px" },
+  searchBox: { position: "relative", width: "100%", maxWidth: "300px" },
   searchIcon: { position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)" },
   searchInput: { width: "100%", padding: "12px 14px 12px 40px", backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "8px", color: "#EAE0C8", fontSize: "13px", outline: "none", boxSizing: "border-box" },
-  listContainer: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(400px, 1fr))", gap: "24px" },
+  listContainer: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" },
   recordCard: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "24px", display: "flex", flexDirection: "column", transition: "border-color 0.2s" },
   recordHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", paddingBottom: "20px", borderBottom: "1px solid #1A1715" },
   guiaInfo: { display: "flex", alignItems: "center", gap: "12px" },
@@ -268,13 +263,13 @@ const styles = {
   btnAbrirRegistro: { display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: "#D4AF37", fontSize: "13px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer" },
   
   // ESTILOS DO MODAL
-  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(17, 15, 14, 0.9)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' },
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(17, 15, 14, 0.9)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' },
   modalContent: { backgroundColor: '#151312', width: '100%', maxWidth: '800px', maxHeight: '90vh', borderRadius: '16px', border: '1px solid #2A2420', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' },
-  modalHeaderFixed: { padding: '24px', borderBottom: '1px solid #2A2420', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1A1715' },
-  btnDownloadPDF: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', backgroundColor: '#D4AF37', color: '#151312', border: 'none', borderRadius: '8px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s' },
+  modalHeaderFixed: { padding: '20px', borderBottom: '1px solid #2A2420', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1A1715', flexWrap: "wrap", gap: "10px" },
+  btnDownloadPDF: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', backgroundColor: '#D4AF37', color: '#151312', border: 'none', borderRadius: '8px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s', flex: 1, justifyContent: "center" },
   btnClose: { background: 'none', border: 'none', cursor: 'pointer', padding: '8px' },
   
   // ESTILOS DA ÁREA DE IMPRESSÃO (O PERGAMINHO EM SI)
-  pdfArea: { padding: '40px 60px', overflowY: 'auto', backgroundColor: '#110F0E' },
-  pdfCabecalho: { display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #3A322C', paddingBottom: '24px', marginBottom: '32px' }
+  pdfArea: { padding: '40px 20px', overflowY: 'auto', backgroundColor: '#110F0E' },
+  pdfCabecalho: { display: 'flex', justifyContent: 'space-between', flexWrap: "wrap", gap: "20px", borderBottom: '1px solid #3A322C', paddingBottom: '24px', marginBottom: '32px' }
 };

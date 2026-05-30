@@ -36,7 +36,6 @@ class FolgaSerializer(serializers.ModelSerializer):
         fields = ['id', 'data']
 
 class AgendaTarologoSerializer(serializers.ModelSerializer):
-    # Aninha os turnos e folgas dentro da agenda para facilitar a vida do React
     turnos = TurnoTrabalhoSerializer(many=True, read_only=True)
     folgas = FolgaSerializer(many=True, read_only=True)
 
@@ -57,7 +56,8 @@ class TransacaoFinanceiraSerializer(serializers.ModelSerializer):
 
 class TarologoProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    # NOVO: A Agenda agora vai viajar junto com o Perfil para o Frontend
+    # ATALHO: Expõe o e-mail de forma plana no perfil do tarólogo (tarologo.email)
+    email = serializers.EmailField(source='user.email', read_only=True)
     agenda = AgendaTarologoSerializer(read_only=True)
     
     class Meta:
@@ -69,15 +69,16 @@ class TarologoProfileSerializer(serializers.ModelSerializer):
 # SERIALIZER DO LOGIN (TOKEN JWT)
 # ==========================================
 
-# Adiciona os metadados do usuário junto aos tokens de acesso na resposta do login
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         
         # Injeta os dados da conta logada no JSON de resposta
-        data['id'] = self.user.id  # <--- ESSA É A PEÇA CHAVE PARA O CHAT FUNCIONAR
+        data['id'] = self.user.id  
         data['role'] = self.user.role
         data['first_name'] = self.user.first_name
+        # CORREÇÃO: Enviando o email para o frontend salvar no localStorage no login!
+        data['email'] = self.user.email  
         
         # Devolve a URL da foto de perfil no momento do login (se o usuário tiver uma)
         data['foto_perfil'] = self.user.foto_perfil.url if self.user.foto_perfil else None

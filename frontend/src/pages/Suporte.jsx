@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { MessageSquare, Mail, Phone, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageSquare, Mail, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Suporte() {
   const [faqAberta, setFaqAberta] = useState(null);
@@ -24,12 +24,12 @@ export default function Suporte() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
+      <div className="header-mobile-col" style={styles.header}>
         <h2 style={styles.title}>Ajuda & Suporte</h2>
         <p style={styles.subtitle}>Encontre respostas rápidas ou entre em contato com nosso santuário.</p>
       </div>
 
-      <div style={styles.grid}>
+      <div className="grid-mobile" style={styles.grid}>
         {/* COLUNA ESQUERDA: FAQ */}
         <div style={styles.faqSection}>
           <h3 style={styles.sectionTitle}>Perguntas Frequentes</h3>
@@ -77,7 +77,15 @@ export default function Suporte() {
             <div>
               <h4 style={styles.contactName}>WhatsApp Arcanum</h4>
               <p style={styles.contactDesc}>Apenas para problemas técnicos urgentes.</p>
-              <a href="#" style={styles.contactLink}>+55 (11) 99999-9999</a>
+              {/* O LINK DO WHATSAPP FOI CORRIGIDO AQUI PARA REDIRECIONAR DIRETO PARA O APP */}
+              <a 
+                href="https://wa.me/5562996721213" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={styles.contactLink}
+              >
+                +55 (62) 99672-1213
+              </a>
             </div>
           </div>
         </div>
@@ -101,7 +109,7 @@ const styles = {
   faqAnswer: { padding: "0 20px 20px 50px", color: "#A89C92", fontSize: "14px", lineHeight: "1.6" },
   
   contactSection: { display: "flex", flexDirection: "column", gap: "16px" },
-  contactCard: { display: "flex", gap: "16px", backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "24px" },
+  contactCard: { display: "flex", gap: "16px", backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "24px", flexWrap: "wrap" },
   contactIconWrapper: { width: "40px", height: "40px", borderRadius: "8px", backgroundColor: "rgba(212, 175, 55, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
   contactName: { color: "#FDFBF7", fontSize: "15px", fontWeight: "500", marginBottom: "4px" },
   contactDesc: { color: "#786C63", fontSize: "12px", marginBottom: "12px" },
