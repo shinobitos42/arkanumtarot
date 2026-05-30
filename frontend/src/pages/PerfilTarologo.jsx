@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check, User, Sparkles } from "lucide-react";
+// Adicionado o ícone Mail aqui na importação
+import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check, User, Sparkles, Mail } from "lucide-react";
 import api from "../services/api";
 
 export default function PerfilTarologo({ tarologo, onVoltar }) {
@@ -16,8 +17,9 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
 
   const [agendadoComSucesso, setAgendadoComSucesso] = useState(false);
 
-  // DADOS DO GUIA (Já Puxados Corretamente na Busca)
+  // DADOS DO GUIA (Puxando o Email do user relacionado)
   const nomeGuia = tarologo?.user?.first_name || tarologo?.user?.username || "Guia Espiritual";
+  const emailGuia = tarologo?.user?.email || "Email não informado"; // <-- NOVO: Extração do Email
   const fotoGuia = tarologo?.foto_perfil || null;
   const especialidade = tarologo?.especialidade || "Tarólogo";
   const biografia = tarologo?.biografia || "A energia está fluindo e pronta para a leitura.";
@@ -108,10 +110,19 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
                  <User size={40} color="#786C63" />
                </div>
             )}
-           
+            
             <div style={styles.profileHeaderInfo}>
               <span style={styles.tagSpec}>{especialidade}</span>
               <h1 style={styles.profileName}>{nomeGuia}</h1>
+              
+              {/* NOVO: Exibindo o Email do Guia aqui na interface */}
+              {emailGuia && (
+                <div style={styles.emailRow}>
+                  <Mail size={14} />
+                  <span>{emailGuia}</span>
+                </div>
+              )}
+
               <div style={styles.ratingRow}>
                 <div style={styles.ratingBadge}>
                   <Star size={12} fill="#151312" color="#151312" /> {notaMedia}
@@ -256,6 +267,10 @@ const styles = {
   profileHeaderInfo: { display: "flex", flexDirection: "column", gap: "6px" },
   tagSpec: { color: "#D4AF37", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px" },
   profileName: { fontSize: "28px", fontWeight: "normal", color: "#FDFBF7", fontFamily: "'Playfair Display', serif" },
+  
+  // Estilo adicionado para a linha do e-mail
+  emailRow: { display: "flex", alignItems: "center", gap: "6px", color: "#A89C92", fontSize: "13px", marginBottom: "4px" },
+
   ratingRow: { display: "flex", alignItems: "center", gap: "12px", marginTop: "4px" },
   ratingBadge: { display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "700", color: "#151312", backgroundColor: "#D4AF37", padding: "2px 6px", borderRadius: "4px" },
 
@@ -274,7 +289,6 @@ const styles = {
   agendamentoCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "12px", padding: "32px" },
   agendarTitle: { color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontSize: "20px", marginBottom: "24px", fontWeight: "normal" },
   
-  // ESTILOS DE SELEÇÃO DE SERVIÇO
   servicosGridSelect: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" },
   servicoCardSelect: { backgroundColor: "#110F0E", border: "1px solid #2A2420", borderRadius: "8px", padding: "16px", cursor: "pointer", transition: "all 0.2s", textAlign: "center", display: "flex", flexDirection: "column", gap: "4px" },
   servicoCardAtivo: { borderColor: "#D4AF37", backgroundColor: "rgba(212, 175, 55, 0.05)" },
