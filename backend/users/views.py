@@ -79,17 +79,36 @@ class UserMeView(generics.RetrieveUpdateAPIView):
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
         
-        # SALVAMENTO DA FOTO DE PERFIL (Vem no request.FILES)
+        # 1. Drible do QueryDict: Transforma em um Dicionário Python simples e limpo
+        data_limpa = {}
+        for key, value in request.data.items():
+            data_limpa[key] = value
+            
+        # 2. Pega a String do React (FormData) e transforma em uma Lista Oficial de Python
+        tipos_str = request.data.get('tipos_tiragem')
+        if tipos_str:
+            try:
+                data_limpa['tipos_tiragem'] = json.loads(tipos_str)
+            except Exception as e:
+                print("Bug na conversão do JSON:", e)
+        
+        # 3. Trata a foto separadamente (request.FILES)
         foto = request.FILES.get('foto_perfil')
         if foto:
             request.user.foto_perfil = foto
             request.user.save()
             
-        serializer = self.get_serializer_class()(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
+        # 4. Passa a "data_limpa" para o Serializer (adeus bug do FormData)
+        serializer = self.get_serializer_class()(instance, data=data_limpa, partial=partial)
+        
+        # O DEDO DURO: Se der 400 de novo, ele imprime no Railway o motivo exato!
+        if not serializer.is_valid():
+            print("⛔ ERRO DE VALIDAÇÃO NO PERFIL:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
         self.perform_update(serializer)
         
-        # Devolve a URL da foto atualizada na resposta
+        # 5. Prepara a resposta final
         response_data = serializer.data
         if request.user.foto_perfil:
             response_data['foto_perfil'] = request.user.foto_perfil.url
