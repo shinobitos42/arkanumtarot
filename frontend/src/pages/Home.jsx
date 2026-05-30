@@ -64,7 +64,7 @@ export default function Home() {
             <span style={styles.pilarNumber}>02</span>
             <h4 style={styles.pilarTitle}>O Poder dos Arquétipos</h4>
             <p style={styles.pilarDesc}>
-              As cartas não traçam um destino imutável, elas revelam as verdades ocultas do presente. Utilizamos o simbolismo sagrado do Tarot para clarear a sua visão e apoiar decisões alinhadas com a sua verdadeira essência.
+              As cartas não traçam um destino imutável, elas revelam as verdades ocultas do presente. Utilizamos o simbolismo sagrado do Tarot22 para clarear a sua visão e apoiar decisões alinhadas com a sua verdadeira essência.
             </p>
           </div>
 
