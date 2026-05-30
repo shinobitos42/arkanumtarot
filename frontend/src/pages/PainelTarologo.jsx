@@ -9,8 +9,8 @@ import api from "../services/api";
 import Mensagens from "./Mensagens"; 
 import AgendaTarologo from "./AgendaTarologo";
 import FinancasTarologo from "./FinancasTarologo";
-// COMPONENTE EXCLUSIVO DO TARÓLOGO IMPORTADO
-import AgendamentosTarologo from "./AgendamentosTarologo"; 
+// CORRIGIDO: Importação agora no singular, batendo com o nome do seu arquivo
+import AgendamentoTarologo from "./AgendamentoTarologo"; 
 
 export default function PainelTarologo() {
   const navigate = useNavigate();
@@ -100,7 +100,6 @@ export default function PainelTarologo() {
     } catch (error) { alert("Houve um erro ao aceitar a sessão. Outro guia já pode ter assumido."); }
   };
 
-  // NOVA FUNÇÃO: Iniciar a sessão que estava agendada
   const iniciarSessaoAgendada = async (sessaoId) => {
     try {
       await api.patch(`tiragens/sessoes/${sessaoId}/`, { status_sessao: 'ao_vivo' });
@@ -173,7 +172,6 @@ export default function PainelTarologo() {
           <NavItem icon={<Zap size={20} />} label="Fila Expressa" ativo={abaAtiva === "Fila Expressa"} onClick={() => mudarAba("Fila Expressa")} />
           <NavItem icon={<MessageCircle size={20} />} label="Sessões Ativas" ativo={abaAtiva === "Sessões Ativas"} onClick={() => mudarAba("Sessões Ativas")} />
           
-          {/* MENU PARA AGENDAMENTOS INTEGRADO */}
           <NavItem icon={<CalendarDays size={20} />} label="Leituras Agendadas" ativo={abaAtiva === "Agendamentos"} onClick={() => mudarAba("Agendamentos")} />
           
           <NavItem icon={<Clock size={20} />} label="Minha Agenda" ativo={abaAtiva === "Minha Agenda"} onClick={() => mudarAba("Minha Agenda")} />
@@ -274,11 +272,9 @@ export default function PainelTarologo() {
            <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Fila Expressa')} />
         )}
 
-        {/* ============================================================== */}
-        {/* COMPONENTE EXCLUSIVO DO TARÓLOGO RENDERIZADO AQUI */}
-        {/* ============================================================== */}
+        {/* CORRIGIDO: Renderização agora no singular */}
         {abaAtiva === "Agendamentos" && (
-          <AgendamentosTarologo onIniciarSessao={iniciarSessaoAgendada} />
+          <AgendamentoTarologo onIniciarSessao={iniciarSessaoAgendada} />
         )}
         
         {abaAtiva === "Minha Agenda" && <AgendaTarologo />}
