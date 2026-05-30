@@ -53,9 +53,7 @@ class TarologoProfile(models.Model):
     especialidade = models.CharField(max_length=200, help_text="Ex: Tarot de Marselha & Astrologia")
     biografia = models.TextField(blank=True, null=True)
     
-    # -------------------------------------------------------------------------
-    # ALTERAÇÃO AQUI: CAMPO ADICIONADO PARA O CARDÁPIO DE CONSULTAS DO GUIA
-    # -------------------------------------------------------------------------
+    # Lista de tiragens personalizadas do tarólogo e seus respectivos valores
     tipos_tiragem = models.JSONField(
         default=list, 
         blank=True, 
@@ -71,7 +69,7 @@ class TarologoProfile(models.Model):
 
 
 # ==========================================
-# MODELOS DE ASSINATURA E PLANOS (NOVO)
+# MODELOS DE ASSINATURA E PLANOS
 # ==========================================
 
 class Assinatura(models.Model):
@@ -147,7 +145,7 @@ class TransacaoFinanceira(models.Model):
     tarologo = models.ForeignKey(TarologoProfile, on_delete=models.CASCADE, related_name='transacoes')
     tipo = models.CharField(max_length=10, choices=Tipo.choices)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
-    descricao = models.CharField(max_length=255, help_text="Ex: Sessão Expressa - Mariana R.")
+    descricao = models.CharField(max_length=255, help_text="Ex: Saque para Pix (email@pix.com)")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.CONCLUIDO)
     data_criacao = models.DateTimeField(auto_now_add=True)
 
