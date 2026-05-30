@@ -93,7 +93,7 @@ export default function AgendaTarologo() {
   return (
     <div style={styles.container}>
       
-      {/* SESSÃO 1: CONFIGURAÇÃO DE FATIAMENTO (NOVO) */}
+      {/* SESSÃO 1: CONFIGURAÇÃO DE FATIAMENTO */}
       <div style={styles.cardSettings}>
         <div style={styles.headerComIcone}>
           <Settings2 size={24} color="#D4AF37" />
@@ -103,7 +103,8 @@ export default function AgendaTarologo() {
           </div>
         </div>
 
-        <div style={styles.configGrid}>
+        {/* Adicionado grid-mobile para empilhar no celular */}
+        <div className="grid-mobile" style={styles.configGrid}>
           <div style={styles.formGroup}>
             <label style={styles.label}>Duração de cada Sessão</label>
             <div style={styles.selectWrapper}>
@@ -141,6 +142,7 @@ export default function AgendaTarologo() {
 
         <div style={styles.semanaList}>
           {semana.map((dia, indexDia) => (
+            // Adicionado flexWrap para quebrar a linha do dia no celular
             <div key={dia.nome} style={{...styles.diaRow, opacity: dia.ativo ? 1 : 0.6}}>
               
               <div style={styles.diaToggle} onClick={() => toggleDiaSemana(indexDia)}>
@@ -155,6 +157,7 @@ export default function AgendaTarologo() {
               {dia.ativo ? (
                 <div style={styles.blocosContainer}>
                   {dia.blocos.map((bloco) => (
+                    // Adicionado flexWrap e width 100% no blocoRow
                     <div key={bloco.id} style={styles.blocoRow}>
                       
                       <CustomTimeSelect 
@@ -194,7 +197,8 @@ export default function AgendaTarologo() {
           Vai tirar férias ou feriado? Adicione a data aqui e bloquearemos a sua agenda inteira neste dia.
         </p>
 
-        <div style={styles.addExcecaoBox}>
+        {/* Adicionado grid-mobile para empilhar input e botão no celular */}
+        <div className="grid-mobile" style={styles.addExcecaoBox}>
           <input 
             type="date" 
             value={novaData} 
@@ -240,44 +244,44 @@ const Check = ({ size, color }) => (
 
 const styles = {
   container: { maxWidth: "800px", display: "flex", flexDirection: "column", gap: "24px", animation: "fadeIn 0.3s ease" },
-  cardSettings: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px" },
+  cardSettings: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "24px", boxSizing: "border-box" }, // Padding reduzido de 32 para 24
   headerComIcone: { display: "flex", gap: "16px", marginBottom: "24px", alignItems: "flex-start" },
   sectionTitle: { color: "#FDFBF7", fontSize: "20px", fontFamily: "'Playfair Display', serif", marginBottom: "8px" },
   subtitle: { color: "#A89C92", fontSize: "13px", lineHeight: "1.5" },
   
   // CONFIGURAÇÕES GERAIS
-  configGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", padding: "24px", backgroundColor: "#110F0E", borderRadius: "8px", border: "1px solid #1A1715" },
+  configGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", padding: "24px", backgroundColor: "#110F0E", borderRadius: "8px", border: "1px solid #1A1715", boxSizing: "border-box" },
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
   label: { color: "#A89C92", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" },
 
   // SELECT CUSTOMIZADO BONITO
-  selectWrapper: { position: "relative", display: "flex", alignItems: "center" },
+  selectWrapper: { position: "relative", display: "flex", alignItems: "center", width: "100%" },
   customSelect: { width: "100%", padding: "12px 36px 12px 16px", backgroundColor: "#1A1715", border: "1px solid #3A322C", color: "#EAE0C8", borderRadius: "8px", fontSize: "14px", fontFamily: "'Inter', sans-serif", outline: "none", appearance: "none", cursor: "pointer", transition: "border-color 0.2s", '&:focus': { borderColor: "#D4AF37" } },
   selectIcon: { position: "absolute", right: "12px", pointerEvents: "none" },
 
   // ROTINA SEMANAL
   semanaList: { display: "flex", flexDirection: "column", gap: "0" },
-  diaRow: { display: "flex", alignItems: "flex-start", gap: "24px", padding: "24px 0", borderBottom: "1px solid #2A2420", transition: "opacity 0.2s" },
-  diaToggle: { display: "flex", alignItems: "center", gap: "12px", width: "140px", cursor: "pointer", paddingTop: "12px" },
-  checkbox: { width: "20px", height: "20px", borderRadius: "6px", border: "2px solid #786C63", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" },
+  diaRow: { display: "flex", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", padding: "24px 0", borderBottom: "1px solid #2A2420", transition: "opacity 0.2s" }, // flexWrap para o mobile
+  diaToggle: { display: "flex", alignItems: "center", gap: "12px", minWidth: "120px", cursor: "pointer", paddingTop: "12px" },
+  checkbox: { width: "20px", height: "20px", borderRadius: "6px", border: "2px solid #786C63", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s", flexShrink: 0 },
   checkboxAtivo: { backgroundColor: "#D4AF37", borderColor: "#D4AF37" },
   diaNome: { fontSize: "15px", fontWeight: "500", transition: "color 0.2s" },
   
-  blocosContainer: { display: "flex", flexDirection: "column", gap: "12px", flex: 1 },
-  blocoRow: { display: "flex", alignItems: "center", backgroundColor: "#110F0E", padding: "12px", borderRadius: "8px", border: "1px solid #1A1715", width: "fit-content" },
-  btnIconDelete: { background: "none", border: "none", color: "#786C63", cursor: "pointer", padding: "8px", marginLeft: "8px", borderRadius: "4px", transition: "all 0.2s", '&:hover': { color: "#ef4444", backgroundColor: "rgba(239, 68, 68, 0.1)" } },
+  blocosContainer: { display: "flex", flexDirection: "column", gap: "12px", flex: 1, minWidth: "260px" },
+  blocoRow: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px", backgroundColor: "#110F0E", padding: "12px", borderRadius: "8px", border: "1px solid #1A1715", width: "100%", maxWidth: "fit-content", boxSizing: "border-box" }, // flexWrap para o celular
+  btnIconDelete: { background: "none", border: "none", color: "#786C63", cursor: "pointer", padding: "8px", marginLeft: "auto", borderRadius: "4px", transition: "all 0.2s" },
   btnAddHorario: { display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: "#D4AF37", fontSize: "13px", fontWeight: "600", cursor: "pointer", padding: "8px 0", width: "fit-content", transition: "opacity 0.2s" },
   indisponivelText: { color: "#786C63", fontSize: "14px", fontStyle: "italic", paddingTop: "12px" },
 
   // DATAS ESPECÍFICAS
-  addExcecaoBox: { display: "flex", gap: "16px", marginBottom: "24px", alignItems: "center" },
-  inputDate: { backgroundColor: "#1A1715", border: "1px solid #3A322C", color: "#EAE0C8", padding: "12px 16px", borderRadius: "8px", outline: "none", fontSize: "14px", width: "200px" },
-  btnSecundario: { padding: "12px 24px", backgroundColor: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" },
+  addExcecaoBox: { display: "flex", gap: "16px", marginBottom: "24px", alignItems: "center", flexWrap: "wrap" }, // flexWrap ativado
+  inputDate: { backgroundColor: "#1A1715", border: "1px solid #3A322C", color: "#EAE0C8", padding: "12px 16px", borderRadius: "8px", outline: "none", fontSize: "14px", width: "100%", maxWidth: "300px", boxSizing: "border-box" },
+  btnSecundario: { padding: "12px 24px", backgroundColor: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s", flex: 1, minWidth: "150px", textAlign: "center" },
   
   listaExcecoes: { display: "flex", flexDirection: "column", gap: "12px" },
-  excecaoItem: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(239, 68, 68, 0.05)", padding: "16px", borderRadius: "8px", border: "1px solid rgba(239, 68, 68, 0.2)" },
+  excecaoItem: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(239, 68, 68, 0.05)", padding: "16px", borderRadius: "8px", border: "1px solid rgba(239, 68, 68, 0.2)", flexWrap: "wrap", gap: "12px" },
   excecaoInfo: { display: "flex", alignItems: "center", gap: "12px" },
-  excecaoData: { color: "#FDFBF7", fontSize: "15px", fontWeight: "500" },
+  excecaoData: { color: "#FDFBF7", fontSize: "14px", fontWeight: "500" },
 
-  btnSalvarPrincipal: { padding: "18px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", width: "100%", textTransform: "uppercase", letterSpacing: "1px", transition: "opacity 0.2s", boxShadow: "0 4px 12px rgba(212, 175, 55, 0.2)" }
+  btnSalvarPrincipal: { padding: "18px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", width: "100%", textTransform: "uppercase", letterSpacing: "1px", transition: "opacity 0.2s", boxShadow: "0 4px 12px rgba(212, 175, 55, 0.2)", boxSizing: "border-box" }
 };

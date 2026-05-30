@@ -21,7 +21,7 @@ const DashboardTarot = () => {
   const [busca, setBusca] = useState("");
   
   const [abaAtiva, setAbaAtiva] = useState(localStorage.getItem('aba_ativa_consulente') || "Visão Geral");
-  const [menuAberto, setMenuAberto] = useState(false); // NOVO: Controle do Menu Mobile
+  const [menuAberto, setMenuAberto] = useState(false); 
   
   const [tarologoSelecionado, setTarologoSelecionado] = useState(null);
   const [nomeUsuario] = useState(localStorage.getItem('user_name') || 'Viajante');
@@ -53,7 +53,7 @@ const DashboardTarot = () => {
     setAbaAtiva(aba);
     localStorage.setItem('aba_ativa_consulente', aba); 
     setTarologoSelecionado(null);
-    setMenuAberto(false); // NOVO: Fecha o menu automaticamente ao clicar numa aba
+    setMenuAberto(false); 
   };
 
   const handleLogout = () => {
@@ -74,7 +74,6 @@ const DashboardTarot = () => {
   return (
     <div className={`app-container ${abaAtiva === 'Mensagens' ? 'app-modo-chat' : ''}`} style={styles.appContainer}>
       
-      {/* NOVO: OVERLAY ESCURO PARA O MENU MOBILE */}
       <div className={`menu-overlay ${menuAberto ? 'aberto' : ''}`} onClick={() => setMenuAberto(false)}></div>
 
       <aside className={`sidebar-dashboard ${menuAberto ? 'aberto' : ''}`} style={styles.sidebar}>
@@ -122,7 +121,6 @@ const DashboardTarot = () => {
         {abaAtiva !== "Mensagens" && (
           <header className="header-dashboard" style={styles.header}>
             
-            {/* NOVO: AGRUPAMENTO DO HAMBURGUER E BREADCRUMB */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                <button className="menu-hamburger" onClick={() => setMenuAberto(true)} style={{ background: 'none', border: 'none', padding: 0 }}>
                  <Menu size={28} color="#D4AF37" />
@@ -134,19 +132,22 @@ const DashboardTarot = () => {
                  <span style={styles.breadcrumbActive}>{tarologoSelecionado ? "Perfil do Guia" : abaAtiva}</span>
                </div>
                
-               {/* TÍTULO EXCLUSIVO PARA O MOBILE */}
                <h2 className="mobile-title" style={{ color: '#D4AF37', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 }}>
                   Arcanum
                </h2>
             </div>
 
             <div className="header-actions" style={styles.headerActions}>
+              {/* CORREÇÃO: Adicionada a classe search-container */}
               <div className="search-container" style={styles.searchContainer}>
                 <Search size={16} color="#786C63" style={styles.searchIcon} />
                 <input type="text" placeholder="Buscar guias..." style={styles.searchInput} value={busca} onChange={(e) => setBusca(e.target.value)} />
               </div>
+              
               <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
-              <button onClick={() => mudarAba("Minha Conta")} style={styles.userProfileBtn}>
+              
+              {/* CORREÇÃO: Adicionada a classe userProfileBtn */}
+              <button onClick={() => mudarAba("Minha Conta")} className="userProfileBtn" style={styles.userProfileBtn}>
                 <div style={styles.userAvatar}>{nomeUsuario.charAt(0).toUpperCase()}</div>
                 <span style={styles.userName}>{nomeUsuario}</span>
                 <ChevronDown size={14} color="#786C63" />

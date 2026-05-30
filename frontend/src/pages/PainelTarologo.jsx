@@ -9,7 +9,6 @@ import api from "../services/api";
 import Mensagens from "./Mensagens"; 
 import AgendaTarologo from "./AgendaTarologo";
 import FinancasTarologo from "./FinancasTarologo";
-// CORRIGIDO: Importação agora no singular, batendo com o nome do seu arquivo
 import AgendamentoTarologo from "./AgendamentoTarologo"; 
 
 export default function PainelTarologo() {
@@ -19,7 +18,6 @@ export default function PainelTarologo() {
   const [menuAberto, setMenuAberto] = useState(false); 
 
   const [nomeUsuario] = useState(localStorage.getItem('user_name') || 'Guia');
-  // CORREÇÃO: Adicionado o setEmailUsuario aqui
   const [emailUsuario, setEmailUsuario] = useState(localStorage.getItem('user_email') || 'oraculo@arcanum.com');
   const [iniciais] = useState(nomeUsuario.substring(0, 2).toUpperCase());
 
@@ -39,6 +37,9 @@ export default function PainelTarologo() {
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
 
+  // Lógica para exibir o selo PRO apenas se não for o plano gratuito
+  const isPro = nomePlano !== "Iniciado";
+
   const mudarAba = (aba) => {
     setAbaAtiva(aba);
     localStorage.setItem('aba_ativa_tarologo', aba);
@@ -51,7 +52,6 @@ export default function PainelTarologo() {
         const resPerfil = await api.get('users/me/');
         if (resPerfil.data.nome_plano_atual) setNomePlano(resPerfil.data.nome_plano_atual);
 
-        // CORREÇÃO: Garantindo que o e-mail real do banco seja exibido e salvo no cache
         if (resPerfil.data.email) {
           setEmailUsuario(resPerfil.data.email);
           localStorage.setItem('user_email', resPerfil.data.email);
@@ -170,34 +170,34 @@ export default function PainelTarologo() {
 
       <aside className={`sidebar-dashboard ${menuAberto ? 'aberto' : ''}`} style={styles.sidebar}>
         <div style={styles.logoContainer}>
-          <Moon size={28} color="#D4AF37" />
-          <h2 style={styles.logoText}>Arkanum Pro</h2>
+          <Moon size={26} color="#D4AF37" />
+          <h2 style={styles.logoText}>
+            Arkanum {isPro && <span style={styles.proBadge}>PRO</span>}
+          </h2>
         </div>
 
         <nav style={styles.navMenu}>
           <p style={styles.navLabel}>MEU TRABALHO</p>
-          <NavItem icon={<Zap size={20} />} label="Fila Expressa" ativo={abaAtiva === "Fila Expressa"} onClick={() => mudarAba("Fila Expressa")} />
-          <NavItem icon={<MessageCircle size={20} />} label="Sessões Ativas" ativo={abaAtiva === "Sessões Ativas"} onClick={() => mudarAba("Sessões Ativas")} />
+          <NavItem icon={<Zap size={18} />} label="Fila Expressa" ativo={abaAtiva === "Fila Expressa"} onClick={() => mudarAba("Fila Expressa")} />
+          <NavItem icon={<MessageCircle size={18} />} label="Sessões Ativas" ativo={abaAtiva === "Sessões Ativas"} onClick={() => mudarAba("Sessões Ativas")} />
+          <NavItem icon={<CalendarDays size={18} />} label="Leituras Agendadas" ativo={abaAtiva === "Agendamentos"} onClick={() => mudarAba("Agendamentos")} />
+          <NavItem icon={<Clock size={18} />} label="Minha Agenda" ativo={abaAtiva === "Minha Agenda"} onClick={() => mudarAba("Minha Agenda")} />
           
-          <NavItem icon={<CalendarDays size={20} />} label="Leituras Agendadas" ativo={abaAtiva === "Agendamentos"} onClick={() => mudarAba("Agendamentos")} />
-          
-          <NavItem icon={<Clock size={20} />} label="Minha Agenda" ativo={abaAtiva === "Minha Agenda"} onClick={() => mudarAba("Minha Agenda")} />
-          
-          <div style={{ marginTop: '16px' }}></div>
+          <div style={{ marginTop: '24px' }}></div>
           <p style={styles.navLabel}>ADMINISTRAÇÃO</p>
-          <NavItem icon={<TrendingUp size={20} />} label="Finanças & Metas" ativo={abaAtiva === "Finanças"} onClick={() => mudarAba("Finanças")} />
-          <NavItem icon={<Settings size={20} />} label="Meu Perfil" ativo={abaAtiva === "Meu Perfil"} onClick={() => mudarAba("Meu Perfil")} />
+          <NavItem icon={<TrendingUp size={18} />} label="Finanças & Metas" ativo={abaAtiva === "Finanças"} onClick={() => mudarAba("Finanças")} />
+          <NavItem icon={<Settings size={18} />} label="Meu Perfil" ativo={abaAtiva === "Meu Perfil"} onClick={() => mudarAba("Meu Perfil")} />
           
           <div onClick={handleLogout} style={{ ...styles.navItem, marginTop: '20px', color: '#ef4444' }}>
-            <div style={{ display: "flex", alignItems: "center" }}><LogOut size={20} /></div>
-            <span style={{ fontSize: "14px", fontWeight: "600" }}>Sair da Conta</span>
+            <div style={{ display: "flex", alignItems: "center" }}><LogOut size={18} /></div>
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>Sair da Conta</span>
           </div>
         </nav>
 
         <div style={{ marginTop: "auto" }}>
           <div style={styles.planCard}>
             <div style={styles.planHeader}>
-              <Sparkles size={20} color="#D4AF37" />
+              <Sparkles size={18} color="#D4AF37" />
               <span style={styles.planTitle}>{nomePlano}</span>
             </div>
             <p style={styles.planDesc}>Plano Atual</p>
@@ -215,11 +215,15 @@ export default function PainelTarologo() {
                  <Menu size={28} color="#D4AF37" />
                </button>
                <h1 className="breadcrumb-desktop page-title" style={{...styles.pageTitle, margin: 0}}>{abaAtiva}</h1>
-               <h2 className="mobile-title" style={{ color: '#D4AF37', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 }}>Arkanum Pro</h2>
+               <h2 className="mobile-title" style={styles.mobileTitle}>
+                 Arkanum {isPro && <span style={styles.proBadgeMobile}>PRO</span>}
+               </h2>
             </div>
             <div className="header-actions" style={styles.headerActions}>
               <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
-              <button onClick={() => mudarAba("Meu Perfil")} style={styles.userProfileBtn}>
+              
+              {/* CLASSE ADICIONADA AQUI: className="userProfileBtn" */}
+              <button onClick={() => mudarAba("Meu Perfil")} className="userProfileBtn" style={styles.userProfileBtn}>
                 <div style={styles.userAvatar}>{iniciais}</div>
                 <span style={styles.userName}>{nomeUsuario}</span>
                 <ChevronDown size={14} color="#786C63" />
@@ -230,7 +234,7 @@ export default function PainelTarologo() {
 
         {abaAtiva === "Fila Expressa" && (
           <div style={styles.sectionContainer}>
-            <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
               <p style={{ color: '#A89C92', fontSize: '15px' }}>Atendimentos aguardando um oraculista disponível.</p>
               <div style={styles.onlineStatusBadge}><div style={styles.dotOnline}></div> Você está Online</div>
             </div>
@@ -239,8 +243,9 @@ export default function PainelTarologo() {
                <div style={{display: 'flex', justifyContent: 'center', padding: '60px'}}><Loader2 size={32} color="#D4AF37" style={{ animation: "spin 1s linear infinite" }} /></div>
             ) : filaExpressa.length === 0 ? (
                <div style={styles.emptyFilaBox}>
-                 <Search size={32} color="#3A322C" style={{marginBottom: '12px'}}/>
-                 <p style={{color: '#A89C92'}}>Nenhum pedido na fila expressa no momento.<br/>O universo está tranquilo.</p>
+                 <Search size={40} color="#2A2420" style={{marginBottom: '16px'}}/>
+                 <h3 style={{color: '#FDFBF7', fontSize: '18px', fontFamily: "'Playfair Display', serif", marginBottom: '8px'}}>Fila Vazia</h3>
+                 <p style={{color: '#786C63'}}>Nenhum pedido na fila expressa no momento.<br/>Aproveite para organizar sua agenda ou perfil.</p>
                </div>
             ) : (
               <div className="grid-mobile" style={styles.filaGrid}>
@@ -257,17 +262,17 @@ export default function PainelTarologo() {
                     <hr style={styles.pedidoDivider} />
                     <div style={styles.pedidoContentSection}>
                       <div style={styles.duvidaBox}>
-                        <span style={styles.labelCurta}>A Questão do Consulente:</span>
+                        <span style={styles.labelCurta}>Questão Central</span>
                         <p style={styles.pedidoPergunta}>"{pedido.pergunta_principal}"</p>
                       </div>
                       {extrairContextoLimpo(pedido.contexto) && (
                         <div style={styles.contextoBox}>
-                          <span style={styles.labelCurta}>Contexto Adicional:</span>
+                          <span style={styles.labelCurta}>Contexto Oculto</span>
                           <p style={styles.pedidoContexto}>{extrairContextoLimpo(pedido.contexto)}</p>
                         </div>
                       )}
                     </div>
-                    <button onClick={() => aceitarPedido(pedido.id)} style={styles.btnAceitar}><Check size={16} /> Iniciar Leitura</button>
+                    <button onClick={() => aceitarPedido(pedido.id)} style={styles.btnAceitar}><Check size={16} /> Iniciar Leitura Agora</button>
                   </div>
                 ))}
               </div>
@@ -279,71 +284,19 @@ export default function PainelTarologo() {
            <Mensagens customStyle={{ margin: 0, height: '100%', borderTop: 'none' }} onVoltarParaPainel={() => mudarAba('Fila Expressa')} />
         )}
 
-        {abaAtiva === "Agendamentos" && (
-          <AgendamentoTarologo onIniciarSessao={iniciarSessaoAgendada} />
-        )}
-        
+        {abaAtiva === "Agendamentos" && <AgendamentoTarologo onIniciarSessao={iniciarSessaoAgendada} />}
         {abaAtiva === "Minha Agenda" && <AgendaTarologo />}
         {abaAtiva === "Finanças" && <FinancasTarologo estatisticas={estatisticas} />}
 
         {abaAtiva === "Meu Perfil" && (
           <div className="grid-mobile" style={styles.profileContainer}>
             <div style={styles.cardSettings}>
-              <h3 style={styles.sectionTitle}>Dados de Acesso</h3>
-              <p style={{ color: "#A89C92", fontSize: "13px", marginBottom: "24px" }}>Estes dados são protegidos.</p>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Nome Completo</label>
-                <div style={styles.inputWrapperDisabled}>
-                  <Lock size={16} color="#786C63" style={styles.inputIcon} />
-                  <input type="text" value={nomeUsuario} disabled style={styles.inputDisabled} />
-                </div>
-              </div>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>E-mail Cadastrado</label>
-                <div style={styles.inputWrapperDisabled}>
-                  <Lock size={16} color="#786C63" style={styles.inputIcon} />
-                  <input type="email" value={emailUsuario} disabled style={styles.inputDisabled} />
-                </div>
-              </div>
               
-              <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '32px 0' }} />
-              
-              <h3 style={styles.sectionTitle}>Cardápio de Serviços e Valores</h3>
-              <p style={{ color: "#A89C92", fontSize: "13px", marginBottom: "24px" }}>Defina os tipos de tiragens que você oferece aos consulentes e os valores.</p>
-              
-              <div style={styles.servicosList}>
-                {tiposTiragem.map((servico) => (
-                  <div key={servico.id} style={styles.servicoItem}>
-                    <div style={styles.servicoInfo}>
-                      <span style={styles.servicoNome}>{servico.nome}</span>
-                      <span style={styles.servicoValor}>R$ {servico.valor}</span>
-                    </div>
-                    <button type="button" onClick={() => removerServico(servico.id)} style={styles.btnIconDelete} title="Remover serviço"><Trash2 size={16}/></button>
-                  </div>
-                ))}
+              <div style={styles.sectionHeader}>
+                <h3 style={styles.sectionTitle}>Sua Vitrine Espiritual</h3>
+                <p style={styles.sectionSubtitle}>Como os consulentes enxergam você no Círculo.</p>
               </div>
 
-              <div style={styles.addServicoForm}>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Tiragem Amorosa" 
-                  value={novoServicoNome} 
-                  onChange={(e) => setNovoServicoNome(e.target.value)} 
-                  style={{...styles.input, flex: 1.5}} 
-                />
-                <input 
-                  type="number" 
-                  placeholder="Ex: 50.00" 
-                  value={novoServicoValor} 
-                  onChange={(e) => setNovoServicoValor(e.target.value)} 
-                  style={{...styles.input, flex: 1}} 
-                />
-                <button type="button" onClick={adicionarServico} style={styles.btnAddServico}><Plus size={18}/></button>
-              </div>
-
-              <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '32px 0' }} />
-
-              <h3 style={styles.sectionTitle}>Vitrine do Guia (Público)</h3>
               <form onSubmit={handleAtualizarVitrine} style={styles.form}>
                 <div className="header-mobile-col" style={styles.avatarContainer}>
                   <div style={styles.avatarWrapper} onClick={() => fileInputRef.current.click()}>
@@ -352,19 +305,77 @@ export default function PainelTarologo() {
                   </div>
                   <div style={styles.avatarText}>
                     <h4 style={styles.avatarTitle}>Foto do Perfil Público</h4>
-                    <p style={styles.avatarSubtitle}>Use uma foto que transmita acolhimento.</p>
+                    <p style={styles.avatarSubtitle}>Use uma imagem nítida, que transmita luz e acolhimento.</p>
                   </div>
                   <input type="file" accept="image/png, image/jpeg" ref={fileInputRef} onChange={handleFotoChange} style={{ display: 'none' }} />
                 </div>
+
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Sua Especialidade Principal (Ex: Taróloga e Astróloga)</label>
-                  <input type="text" value={perfil.especialidade} onChange={(e) => setPerfil({...perfil, especialidade: e.target.value})} style={styles.input} />
+                  <label style={styles.label}>Nome de Guia</label>
+                  <div style={styles.inputWrapperDisabled}>
+                    <Lock size={16} color="#786C63" style={styles.inputIcon} />
+                    <input type="text" value={nomeUsuario} disabled style={styles.inputDisabled} />
+                  </div>
                 </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>E-mail de Cadastro</label>
+                  <div style={styles.inputWrapperDisabled}>
+                    <Lock size={16} color="#786C63" style={styles.inputIcon} />
+                    <input type="email" value={emailUsuario} disabled style={styles.inputDisabled} />
+                  </div>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Sua Especialidade Principal</label>
+                  <input type="text" placeholder="Ex: Taróloga e Astróloga" value={perfil.especialidade} onChange={(e) => setPerfil({...perfil, especialidade: e.target.value})} style={styles.input} />
+                </div>
+                
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Biografia e Metodologia</label>
-                  <textarea value={perfil.biografia} onChange={(e) => setPerfil({...perfil, biografia: e.target.value})} placeholder="Conte aos consulentes..." style={styles.textarea}></textarea>
+                  <textarea value={perfil.biografia} onChange={(e) => setPerfil({...perfil, biografia: e.target.value})} placeholder="Conte aos consulentes sobre sua jornada..." style={styles.textarea}></textarea>
                 </div>
-                <button type="submit" style={styles.btnSalvar} disabled={salvando}>{salvando ? "Salvando..." : "Salvar Alterações do Perfil"}</button>
+
+                <hr style={styles.divider} />
+              
+                <div style={styles.sectionHeader}>
+                  <h3 style={styles.sectionTitle}>Cardápio de Serviços</h3>
+                  <p style={styles.sectionSubtitle}>As tiragens exclusivas que você oferece em consultas agendadas.</p>
+                </div>
+                
+                <div style={styles.servicosList}>
+                  {tiposTiragem.map((servico) => (
+                    <div key={servico.id} style={styles.servicoItem}>
+                      <div style={styles.servicoInfo}>
+                        <span style={styles.servicoNome}>{servico.nome}</span>
+                        <span style={styles.servicoValor}>R$ {servico.valor}</span>
+                      </div>
+                      <button type="button" onClick={() => removerServico(servico.id)} style={styles.btnIconDelete} title="Remover serviço"><Trash2 size={16}/></button>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={styles.addServicoForm}>
+                  <input 
+                    type="text" 
+                    placeholder="Nome da Tiragem (Ex: Mandala Astrológica)" 
+                    value={novoServicoNome} 
+                    onChange={(e) => setNovoServicoNome(e.target.value)} 
+                    style={{...styles.input, flex: 1.5}} 
+                  />
+                  <input 
+                    type="number" 
+                    placeholder="Valor (Ex: 80.00)" 
+                    value={novoServicoValor} 
+                    onChange={(e) => setNovoServicoValor(e.target.value)} 
+                    style={{...styles.input, flex: 1}} 
+                  />
+                  <button type="button" onClick={adicionarServico} style={styles.btnAddServico}><Plus size={18}/></button>
+                </div>
+
+                <button type="submit" style={styles.btnSalvar} disabled={salvando}>
+                  {salvando ? "Salvando Alterações..." : "Salvar e Atualizar Vitrine"}
+                </button>
               </form>
             </div>
           </div>
@@ -378,87 +389,94 @@ export default function PainelTarologo() {
 const NavItem = ({ icon, label, ativo, onClick }) => (
   <div onClick={onClick} style={{ ...styles.navItem, ...(ativo ? styles.navItemAtivo : {}) }}>
     <div style={{ color: ativo ? '#D4AF37' : '#786C63' }}>{icon}</div>
-    <span style={{ ...styles.navItemText, color: ativo ? '#FDFBF7' : '#A89C92' }}>{label}</span>
+    <span style={{ ...styles.navItemText, color: ativo ? '#FDFBF7' : '#A89C92', fontWeight: ativo ? '600' : '400' }}>{label}</span>
   </div>
 );
 
 const styles = {
   appContainer: { display: "flex", height: "100vh", backgroundColor: "#110F0E", fontFamily: "'Inter', sans-serif" },
   sidebar: { display: "flex", flexDirection: "column", width: "260px", backgroundColor: "#151312", borderRight: "1px solid #2A2420", padding: "32px 20px" },
-  logoContainer: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "40px" },
-  logoText: { fontSize: "22px", color: "#D4AF37", fontFamily: "'Playfair Display', serif", fontStyle: "italic" },
-  navMenu: { display: "flex", flexDirection: "column", gap: "4px" },
-  navLabel: { fontSize: "11px", fontWeight: "700", color: "#786C63", letterSpacing: "1px", marginBottom: "12px", paddingLeft: "10px" },
-  navItem: { display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", cursor: "pointer", transition: "0.2s" },
-  navItemAtivo: { backgroundColor: "#1A1715", borderLeft: "3px solid #D4AF37" },
-  navItemText: { fontSize: "14px", fontWeight: "500" },
+  logoContainer: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "48px", paddingLeft: "8px" },
+  logoText: { display: "flex", alignItems: "center", fontSize: "22px", color: "#D4AF37", fontFamily: "'Playfair Display', serif", fontStyle: "italic", margin: 0 },
+  proBadge: { backgroundColor: "#D4AF37", color: "#151312", fontSize: "10px", fontWeight: "800", padding: "2px 6px", borderRadius: "4px", fontStyle: "normal", marginLeft: "8px", letterSpacing: "1px" },
+  proBadgeMobile: { backgroundColor: "#D4AF37", color: "#151312", fontSize: "9px", fontWeight: "800", padding: "2px 5px", borderRadius: "4px", fontStyle: "normal", marginLeft: "6px", letterSpacing: "1px", verticalAlign: "middle" },
+  navMenu: { display: "flex", flexDirection: "column", gap: "6px" },
+  navLabel: { fontSize: "11px", fontWeight: "700", color: "#786C63", letterSpacing: "1px", marginBottom: "12px", paddingLeft: "12px" },
+  navItem: { display: "flex", alignItems: "center", gap: "12px", padding: "12px 14px", borderRadius: "8px", cursor: "pointer", transition: "all 0.2s" },
+  navItemAtivo: { backgroundColor: "rgba(212, 175, 55, 0.08)", color: "#D4AF37" },
+  navItemText: { fontSize: "14px" },
   
   mainContent: { flex: 1, overflowY: "auto", backgroundColor: "#110F0E" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px", borderBottom: "1px solid #1A1715", paddingBottom: "24px" },
-  pageTitle: { fontSize: "28px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "48px", borderBottom: "1px solid #1A1715", paddingBottom: "24px" },
+  pageTitle: { fontSize: "28px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", letterSpacing: "0.5px" },
+  mobileTitle: { display: "flex", alignItems: "center", color: '#D4AF37', fontSize: '20px', fontStyle: 'italic', fontFamily: "'Playfair Display', serif", margin: 0 },
   headerActions: { display: "flex", gap: "16px", alignItems: "center" },
-  iconBtn: { padding: "10px", backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "8px", cursor: "pointer" },
-  userProfileBtn: { display: "flex", alignItems: "center", gap: "10px", padding: "6px 12px", backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "30px", cursor: "pointer" },
-  userAvatar: { width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "#D4AF37", color: "#151312", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700" },
-  userName: { color: "#FDFBF7", fontSize: "14px", fontWeight: "500", marginRight: "4px" },
+  iconBtn: { padding: "10px", backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", '&:hover': { borderColor: "#D4AF37" } },
+  userProfileBtn: { display: "flex", alignItems: "center", gap: "10px", padding: "6px 14px 6px 6px", backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "30px", cursor: "pointer", transition: "all 0.2s" },
+  userAvatar: { width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#D4AF37", color: "#151312", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "700" },
+  userName: { color: "#FDFBF7", fontSize: "13px", fontWeight: "500", marginRight: "4px" },
 
   sectionContainer: { marginTop: "0" },
-  sectionTitle: { color: "#FDFBF7", fontSize: "20px", fontFamily: "'Playfair Display', serif", marginBottom: "8px" },
-  emptyFilaBox: { backgroundColor: '#151312', border: '1px dashed #2A2420', borderRadius: '12px', padding: '60px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' },
-  onlineStatusBadge: { display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '13px', fontWeight: '500', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 12px', borderRadius: '20px' },
-  dotOnline: { width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%', boxShadow: '0 0 8px rgba(16,185,129,0.5)' },
+  emptyFilaBox: { backgroundColor: '#151312', border: '1px dashed #2A2420', borderRadius: '16px', padding: '80px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' },
+  onlineStatusBadge: { display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontSize: '13px', fontWeight: '600', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 14px', borderRadius: '30px', border: '1px solid rgba(16, 185, 129, 0.2)' },
+  dotOnline: { width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%', boxShadow: '0 0 10px rgba(16,185,129,0.6)' },
 
   filaGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "24px" },
-  pedidoCard: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "16px", padding: "24px", display: "flex", flexDirection: "column", transition: "transform 0.2s, box-shadow 0.2s", ":hover": { transform: "translateY(-2px)", boxShadow: "0 10px 25px rgba(0,0,0,0.3)" } },
+  pedidoCard: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "16px", padding: "28px", display: "flex", flexDirection: "column", transition: "all 0.3s ease", boxShadow: "0 4px 20px rgba(0,0,0,0.2)", cursor: "pointer" },
   pedidoHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" },
   pedidoPriceBadge: { backgroundColor: "rgba(212, 175, 55, 0.1)", color: "#D4AF37", padding: "6px 12px", borderRadius: "6px", fontSize: "13px", fontWeight: "700", border: "1px solid rgba(212, 175, 55, 0.2)" },
   pedidoTempo: { display: "flex", alignItems: "center", gap: "6px", color: "#786C63", fontSize: "12px", fontWeight: "500" },
   pedidoUserSection: { marginBottom: "16px" },
-  pedidoConsulente: { color: "#FDFBF7", fontSize: "22px", fontFamily: "'Playfair Display', serif", marginBottom: "8px", textTransform: "capitalize" },
+  pedidoConsulente: { color: "#FDFBF7", fontSize: "22px", fontFamily: "'Playfair Display', serif", marginBottom: "8px", textTransform: "capitalize", letterSpacing: "0.5px" },
   tagEnergia: { display: "inline-flex", alignItems: "center", gap: "6px", color: "#EAE0C8", fontSize: "13px", fontStyle: "italic" },
-  pedidoDivider: { border: "none", borderTop: "1px dashed #2A2420", margin: "0 0 20px 0" },
-  pedidoContentSection: { display: "flex", flexDirection: "column", gap: "16px", flex: 1, marginBottom: "24px" },
-  duvidaBox: { borderLeft: "3px solid #D4AF37", paddingLeft: "16px" },
-  contextoBox: { borderLeft: "3px solid #3A322C", paddingLeft: "16px" },
-  labelCurta: { color: "#786C63", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px", display: "block", fontWeight: "600" },
-  pedidoPergunta: { color: "#D4AF37", fontSize: "16px", fontStyle: "italic", lineHeight: "1.5", wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', margin: 0 },
-  pedidoContexto: { color: "#A89C92", fontSize: "13px", lineHeight: "1.6", wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', margin: 0 },
-  btnAceitar: { width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "14px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", transition: "opacity 0.2s" },
+  pedidoDivider: { border: "none", borderTop: "1px solid #1A1715", margin: "0 0 20px 0" },
+  pedidoContentSection: { display: "flex", flexDirection: "column", gap: "16px", flex: 1, marginBottom: "32px" },
+  duvidaBox: { borderLeft: "2px solid #D4AF37", paddingLeft: "16px", backgroundColor: "#1A1715", padding: "16px", borderRadius: "0 8px 8px 0" },
+  contextoBox: { borderLeft: "2px solid #3A322C", paddingLeft: "16px", padding: "12px 16px" },
+  labelCurta: { color: "#786C63", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px", display: "block", fontWeight: "700" },
+  pedidoPergunta: { color: "#D4AF37", fontSize: "15px", fontStyle: "italic", lineHeight: "1.6", margin: 0 },
+  pedidoContexto: { color: "#A89C92", fontSize: "13px", lineHeight: "1.6", margin: 0 },
+  btnAceitar: { width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "16px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", transition: "opacity 0.2s" },
 
-  profileContainer: { maxWidth: "600px", margin: "0 auto" },
-  cardSettings: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px" },
+  profileContainer: { maxWidth: "700px", margin: "0 auto" },
+  cardSettings: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "16px", padding: "40px", boxShadow: "0 10px 30px rgba(0,0,0,0.3)" },
+  sectionHeader: { marginBottom: "32px" },
+  sectionTitle: { color: "#FDFBF7", fontSize: "22px", fontFamily: "'Playfair Display', serif", marginBottom: "8px", fontWeight: "normal" },
+  sectionSubtitle: { color: "#A89C92", fontSize: "14px", fontWeight: "300", lineHeight: "1.5" },
+  
   form: { display: "flex", flexDirection: "column", gap: "24px" },
   formGroup: { display: "flex", flexDirection: "column", gap: "8px" },
-  label: { color: "#A89C92", fontSize: "12px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" },
+  label: { color: "#EAE0C8", fontSize: "13px", fontWeight: "600", letterSpacing: "0.5px" },
   
   servicosList: { display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" },
-  servicoItem: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#110F0E", padding: "16px", borderRadius: "8px", border: "1px solid #2A2420" },
+  servicoItem: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#1A1715", padding: "16px 20px", borderRadius: "8px", border: "1px solid #2A2420" },
   servicoInfo: { display: "flex", flexDirection: "column", gap: "4px" },
   servicoNome: { color: "#FDFBF7", fontSize: "15px", fontWeight: "500" },
-  servicoValor: { color: "#D4AF37", fontSize: "14px", fontWeight: "600" },
-  btnIconDelete: { background: "none", border: "none", color: "#786C63", cursor: "pointer", padding: "8px", borderRadius: "4px", transition: "all 0.2s", '&:hover': { color: "#ef4444", backgroundColor: "rgba(239, 68, 68, 0.1)" } },
+  servicoValor: { color: "#D4AF37", fontSize: "14px", fontWeight: "700" },
+  btnIconDelete: { background: "none", border: "none", color: "#786C63", cursor: "pointer", padding: "8px", borderRadius: "6px", transition: "all 0.2s" },
   addServicoForm: { display: "flex", gap: "12px", alignItems: "stretch" },
-  btnAddServico: { padding: "0 20px", backgroundColor: "#3A322C", color: "#FDFBF7", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s", '&:hover': { backgroundColor: "#D4AF37", color: "#151312" } },
+  btnAddServico: { padding: "0 24px", backgroundColor: "#2A2420", color: "#FDFBF7", border: "none", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" },
 
-  avatarContainer: { display: "flex", alignItems: "center", gap: "20px", paddingBottom: "20px" },
-  avatarWrapper: { position: "relative", width: "80px", height: "80px", borderRadius: "50%", cursor: "pointer", overflow: "hidden", border: "2px solid #3A322C", backgroundColor: "#110F0E" },
+  avatarContainer: { display: "flex", alignItems: "center", gap: "24px", paddingBottom: "24px", borderBottom: "1px solid #1A1715" },
+  avatarWrapper: { position: "relative", width: "96px", height: "96px", borderRadius: "50%", cursor: "pointer", overflow: "hidden", border: "2px solid #3A322C", backgroundColor: "#110F0E", flexShrink: 0 },
   avatarImage: { width: "100%", height: "100%", objectFit: "cover" },
   avatarPlaceholder: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" },
-  avatarOverlay: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(21, 19, 18, 0.6)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s", '&:hover': { opacity: 1 } },
-  avatarText: { display: "flex", flexDirection: "column", gap: "4px" },
-  avatarTitle: { color: "#FDFBF7", fontSize: "14px", fontWeight: "600" },
-  avatarSubtitle: { color: "#786C63", fontSize: "12px" },
+  avatarOverlay: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(21, 19, 18, 0.6)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" },
+  avatarText: { display: "flex", flexDirection: "column", gap: "6px" },
+  avatarTitle: { color: "#FDFBF7", fontSize: "15px", fontWeight: "600" },
+  avatarSubtitle: { color: "#A89C92", fontSize: "13px", lineHeight: "1.5" },
 
-  inputWrapperDisabled: { position: "relative", display: "flex", alignItems: "center", backgroundColor: "#110F0E", borderRadius: "8px" },
-  inputIcon: { position: "absolute", left: "14px" },
-  inputDisabled: { width: "100%", padding: "14px 14px 14px 40px", backgroundColor: "transparent", border: "1px solid #2A2420", borderRadius: "8px", color: "#786C63", fontSize: "14px", cursor: "not-allowed" },
-  input: { width: "100%", padding: "14px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", boxSizing: "border-box" },
-  textarea: { width: "100%", height: "120px", padding: "14px", backgroundColor: "#110F0E", border: "1px solid #3A322C", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", resize: "none", boxSizing: "border-box" },
-  btnSalvar: { padding: "18px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", marginTop: "8px", transition: "opacity 0.2s" },
+  inputWrapperDisabled: { position: "relative", display: "flex", alignItems: "center", backgroundColor: "#1A1715", borderRadius: "8px", border: "1px solid #2A2420" },
+  inputIcon: { position: "absolute", left: "16px" },
+  inputDisabled: { width: "100%", padding: "16px 16px 16px 44px", backgroundColor: "transparent", border: "none", color: "#786C63", fontSize: "14px", cursor: "not-allowed" },
+  input: { width: "100%", padding: "16px", backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" },
+  textarea: { width: "100%", height: "140px", padding: "16px", backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "8px", color: "#EAE0C8", fontSize: "14px", outline: "none", resize: "none", boxSizing: "border-box", transition: "border-color 0.2s" },
+  btnSalvar: { padding: "18px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", marginTop: "16px", transition: "opacity 0.2s" },
+  divider: { border: "none", borderTop: "1px dashed #2A2420", margin: "16px 0" },
 
-  planCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "8px", padding: "16px" },
+  planCard: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "20px" },
   planHeader: { display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" },
-  planTitle: { color: "#FDFBF7", fontSize: "14px", fontWeight: "600" },
-  planDesc: { color: "#A89C92", marginBottom: "12px", marginLeft: "28px", fontSize: "12px" },
-  planBtn: { width: "100%", padding: "8px", backgroundColor: "#D4AF37", border: "none", color: "#110F0E", borderRadius: "4px", cursor: "pointer", fontSize: "12px", fontWeight: "600" }
+  planTitle: { color: "#FDFBF7", fontSize: "14px", fontWeight: "700" },
+  planDesc: { color: "#786C63", marginBottom: "16px", marginLeft: "26px", fontSize: "12px" },
+  planBtn: { width: "100%", padding: "10px", backgroundColor: "transparent", border: "1px solid #D4AF37", color: "#D4AF37", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "600", textTransform: "uppercase" }
 };

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// Adicionado o ícone Mail aqui na importação
 import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check, User, Sparkles, Mail } from "lucide-react";
 import api from "../services/api";
 
@@ -17,9 +16,9 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
 
   const [agendadoComSucesso, setAgendadoComSucesso] = useState(false);
 
-  // DADOS DO GUIA (Puxando o Email do user relacionado)
+  // DADOS DO GUIA 
   const nomeGuia = tarologo?.user?.first_name || tarologo?.user?.username || "Guia Espiritual";
-  const emailGuia = tarologo?.user?.email || "Email não informado"; // <-- NOVO: Extração do Email
+  const emailGuia = tarologo?.user?.email || "Email não informado"; 
   const fotoGuia = tarologo?.foto_perfil || null;
   const especialidade = tarologo?.especialidade || "Tarólogo";
   const biografia = tarologo?.biografia || "A energia está fluindo e pronta para a leitura.";
@@ -30,17 +29,17 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
     ? typeof tarologo.tipos_tiragem === 'string' ? JSON.parse(tarologo.tipos_tiragem) : tarologo.tipos_tiragem
     : [{ id: 1, nome: "Tiragem Completa", valor: tarologo?.valor_consulta || "35.00" }];
 
-  // 1. BUSCA A AGENDA REAL DO BANCO DE DADOS
+  // BUSCA A AGENDA
   useEffect(() => {
     const buscarAgenda = async () => {
       try {
         const response = await api.get(`users/tarologos/${tarologo.id}/horarios/`);
-        const agendaData = response.data; // Ex: { "2026-05-26": ["09:00", "10:00"], "2026-05-27": ["14:00"] }
+        const agendaData = response.data; 
         setAgendaReal(agendaData);
         setDatasDisponiveis(Object.keys(agendaData));
       } catch (error) {
         console.error("Erro ao buscar agenda:", error);
-        // FALLBACK: Caso a rota do backend não exista ainda, criamos uma agenda falsa para não quebrar a tela
+        // FALLBACK: Cria agenda falsa caso não tenha backend configurado
         const hoje = new Date();
         const amanha = new Date(); amanha.setDate(hoje.getDate() + 1);
         const data1 = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -59,11 +58,11 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
     if (tarologo?.id) buscarAgenda();
   }, [tarologo]);
 
-  // 2. ATUALIZA OS HORÁRIOS QUANDO O USUÁRIO CLICA NO DIA
+  // ATUALIZA OS HORÁRIOS
   useEffect(() => {
     if (dataSelecionada && agendaReal[dataSelecionada]) {
       setHorariosDisponiveis(agendaReal[dataSelecionada]);
-      setHoraSelecionada(""); // Reseta a hora ao mudar o dia
+      setHoraSelecionada(""); 
     } else {
       setHorariosDisponiveis([]);
     }
@@ -72,9 +71,7 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
   const handleAgendar = (e) => {
     e.preventDefault();
     if (!servicoSelecionado || !dataSelecionada || !horaSelecionada) return;
-    
     setAgendadoComSucesso(true);
-    // Aqui conectaremos ao Checkout Transparente depois!
   };
 
   if (agendadoComSucesso) {
@@ -95,27 +92,29 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
   return (
     <div style={styles.container}>
       <button onClick={onVoltar} style={styles.btnVoltar}>
-        <ChevronLeft size={16} /> Voltar para a lista
+        <ChevronLeft size={16} /> Voltar para o Círculo
       </button>
 
       <div className="grid-mobile" style={styles.profileLayout}>
         
+        {/* COLUNA ESQUERDA: INFORMAÇÕES DO GUIA */}
         <div style={styles.colEsquerda}>
           
           <div className="header-mobile-col" style={styles.profileHeaderCard}>
-            {fotoGuia ? (
-               <img src={fotoGuia} alt={nomeGuia} style={styles.profileAvatar} />
-            ) : (
-               <div style={styles.avatarPlaceholder}>
-                 <User size={40} color="#786C63" />
-               </div>
-            )}
+            <div style={styles.avatarRing}>
+              {fotoGuia ? (
+                 <img src={fotoGuia} alt={nomeGuia} style={styles.profileAvatar} />
+              ) : (
+                 <div style={styles.avatarPlaceholder}>
+                   <User size={48} color="#786C63" />
+                 </div>
+              )}
+            </div>
             
             <div style={styles.profileHeaderInfo}>
               <span style={styles.tagSpec}>{especialidade}</span>
               <h1 style={styles.profileName}>{nomeGuia}</h1>
               
-              {/* NOVO: Exibindo o Email do Guia aqui na interface */}
               {emailGuia && (
                 <div style={styles.emailRow}>
                   <Mail size={14} />
@@ -123,71 +122,82 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
                 </div>
               )}
 
-              <div style={styles.ratingRow}>
-                <div style={styles.ratingBadge}>
-                  <Star size={12} fill="#151312" color="#151312" /> {notaMedia}
-                </div>
+              <div style={styles.ratingBadge}>
+                <Star size={12} fill="#D4AF37" color="#D4AF37" /> 
+                <span style={{ color: '#EAE0C8', fontWeight: '600', marginLeft: '4px' }}>{notaMedia}</span>
+                <span style={{ color: '#786C63', fontWeight: '400', marginLeft: '4px' }}>(Avaliações)</span>
               </div>
             </div>
           </div>
 
-          <div style={styles.sectionCard}>
-            <h3 style={styles.sectionTitle}>
-              <Award size={18} color="#D4AF37" /> Trajetória e Conexão
-            </h3>
-            <p style={styles.sectionText}>{biografia}</p>
-          </div>
+          {/* Área de conteúdo fluida (sem caixotes pesados) */}
+          <div style={styles.contentFlow}>
+            <div style={styles.sectionBlock}>
+              <h3 style={styles.sectionTitle}>
+                <Award size={20} color="#D4AF37" /> Trajetória e Conexão
+              </h3>
+              <p style={styles.sectionText}>{biografia}</p>
+            </div>
 
-          <div style={styles.sectionCard}>
-            <h3 style={styles.sectionTitle}>
-              <MessageSquare size={18} color="#D4AF37" /> Relatos de Clareza
-            </h3>
-            <div style={styles.reviewsList}>
-              <div style={styles.reviewItem}>
-                <div style={styles.reviewMeta}>
-                  <strong style={styles.reviewUser}>Mariana R.</strong>
-                  <div style={styles.reviewStars}><Star size={10} fill="#D4AF37" color="#D4AF37" /> 5.0</div>
+            <hr style={styles.divider} />
+
+            <div style={styles.sectionBlock}>
+              <h3 style={styles.sectionTitle}>
+                <MessageSquare size={20} color="#D4AF37" /> Relatos de Clareza
+              </h3>
+              <div style={styles.reviewsList}>
+                <div style={styles.reviewItem}>
+                  <div style={styles.reviewMeta}>
+                    <strong style={styles.reviewUser}>Mariana R.</strong>
+                    <div style={styles.reviewStars}><Star size={10} fill="#D4AF37" color="#D4AF37" /> 5.0</div>
+                  </div>
+                  <p style={styles.reviewText}>"A leitura foi extremamente cirúrgica. Consegui enxergar caminhos que pareciam bloqueados."</p>
                 </div>
-                <p style={styles.reviewText}>"A leitura foi extremamente cirúrgica. Consegui enxergar caminhos que pareciam bloqueados."</p>
               </div>
             </div>
           </div>
 
         </div>
 
+        {/* COLUNA DIREITA: WIDGET DE AGENDAMENTO */}
         <div className="coluna-direita-mobile" style={styles.colDireita}>
           <div style={styles.agendamentoCard}>
             
             <h3 style={styles.agendarTitle}>Reservar Leitura</h3>
+            <p style={styles.agendarSubtitle}>Escolha a profundidade da sua consulta e o melhor momento.</p>
 
-            {/* SELEÇÃO DO TIPO DE TIRAGEM (CARDÁPIO) */}
             <div style={styles.formGroup}>
               <label style={styles.inputLabel}>
-                <Sparkles size={14} style={{ marginRight: '6px' }} /> 1. Escolha a sua Tiragem
+                <Sparkles size={16} color="#D4AF37" /> 1. Escolha a sua Tiragem
               </label>
-              <div style={styles.servicosGridSelect}>
+              
+              {/* Lista Vertical Elegante */}
+              <div style={styles.servicosListVertical}>
                 {cardapioTiragens.map((servico) => {
                   const isActive = servicoSelecionado?.id === servico.id;
                   return (
                     <div 
                       key={servico.id} 
                       onClick={() => setServicoSelecionado(servico)}
-                      style={{ ...styles.servicoCardSelect, ...(isActive ? styles.servicoCardAtivo : {}) }}
+                      style={{ ...styles.servicoRowSelect, ...(isActive ? styles.servicoRowAtivo : {}) }}
                     >
-                      <h4 style={{ ...styles.sCardNome, color: isActive ? '#D4AF37' : '#FDFBF7' }}>{servico.nome}</h4>
-                      <p style={{ ...styles.sCardValor, color: isActive ? '#D4AF37' : '#A89C92' }}>R$ {servico.valor}</p>
+                      <div style={styles.radioFake}>
+                        {isActive && <div style={styles.radioFakeInner}></div>}
+                      </div>
+                      <span style={{ ...styles.sCardNome, color: isActive ? '#D4AF37' : '#FDFBF7' }}>{servico.nome}</span>
+                      <span style={{ ...styles.sCardValor, color: isActive ? '#D4AF37' : '#A89C92' }}>R$ {servico.valor}</span>
                     </div>
                   );
                 })}
               </div>
             </div>
             
-            <hr style={{ border: 'none', borderTop: '1px solid #2A2420', margin: '24px 0' }} />
+            <hr style={styles.dividerSutil} />
 
             <form onSubmit={handleAgendar} style={styles.agendamentoForm}>
               <div style={styles.formGroup}>
                 <label style={styles.inputLabel}>
-                  <Calendar size={14} style={{ marginRight: '6px' }} /> 2. Selecione o Dia
+                  <Calendar size={16} color="#D4AF37" /> 2. Selecione o Dia
                 </label>
                 
                 {carregandoAgenda ? (
@@ -213,7 +223,7 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
               {dataSelecionada && (
                 <div style={styles.formGroup}>
                   <label style={styles.inputLabel}>
-                    <Clock size={14} style={{ marginRight: '6px' }} /> 3. Horários Disponíveis
+                    <Clock size={16} color="#D4AF37" /> 3. Horários Disponíveis
                   </label>
                   <div style={styles.selectorGridHoras}>
                     {horariosDisponiveis.map((hora) => (
@@ -238,13 +248,13 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
                   ...(!servicoSelecionado || !dataSelecionada || !horaSelecionada ? styles.btnConfirmarDesativado : {})
                 }}
               >
-                Confirmar Leitura ({servicoSelecionado ? `R$ ${servicoSelecionado.valor}` : "..."})
+                Continuar para Pagamento
               </button>
             </form>
 
             <div style={styles.garantiaBox}>
-              <ShieldCheck size={14} color="#786C63" />
-              <span>Ambiente seguro e atendimento 100% sigiloso.</span>
+              <ShieldCheck size={16} color="#786C63" />
+              <span>Ambiente seguro. Sigilo espiritual garantido.</span>
             </div>
           </div>
         </div>
@@ -255,61 +265,71 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
 }
 
 const styles = {
-  container: { display: "flex", flexDirection: "column", gap: "24px" },
-  btnVoltar: { display: "flex", alignItems: "center", gap: "6px", backgroundColor: "transparent", border: "none", color: "#A89C92", fontSize: "13px", cursor: "pointer", alignSelf: "flex-start", padding: 0, transition: "color 0.2s" },
-  profileLayout: { display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: "32px", alignItems: "start" },
+  container: { display: "flex", flexDirection: "column", gap: "32px", animation: "fadeIn 0.4s ease" },
+  btnVoltar: { display: "flex", alignItems: "center", gap: "6px", backgroundColor: "transparent", border: "none", color: "#A89C92", fontSize: "14px", cursor: "pointer", alignSelf: "flex-start", padding: "8px 0", transition: "color 0.2s" },
   
-  colEsquerda: { display: "flex", flexDirection: "column", gap: "24px" },
-  profileHeaderCard: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px", display: "flex", gap: "24px", alignItems: "center" },
-  profileAvatar: { width: "100px", height: "100px", borderRadius: "12px", objectFit: "cover", border: "1px solid #3A322C" },
-  avatarPlaceholder: { width: "100px", height: "100px", borderRadius: "12px", backgroundColor: "#110F0E", border: "1px solid #3A322C", display: "flex", alignItems: "center", justifyContent: "center" },
+  profileLayout: { display: "grid", gridTemplateColumns: "1.4fr 1.1fr", gap: "48px", alignItems: "start" },
   
-  profileHeaderInfo: { display: "flex", flexDirection: "column", gap: "6px" },
-  tagSpec: { color: "#D4AF37", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px" },
-  profileName: { fontSize: "28px", fontWeight: "normal", color: "#FDFBF7", fontFamily: "'Playfair Display', serif" },
+  // COLUNA ESQUERDA (Info e Bio)
+  colEsquerda: { display: "flex", flexDirection: "column", gap: "40px" },
   
-  // Estilo adicionado para a linha do e-mail
-  emailRow: { display: "flex", alignItems: "center", gap: "6px", color: "#A89C92", fontSize: "13px", marginBottom: "4px" },
+  profileHeaderCard: { display: "flex", gap: "32px", alignItems: "center", backgroundColor: "transparent" },
+  avatarRing: { padding: "4px", borderRadius: "50%", border: "1px dashed #D4AF37", display: "flex", alignItems: "center", justifyContent: "center" },
+  profileAvatar: { width: "120px", height: "120px", borderRadius: "50%", objectFit: "cover" },
+  avatarPlaceholder: { width: "120px", height: "120px", borderRadius: "50%", backgroundColor: "#151312", display: "flex", alignItems: "center", justifyContent: "center" },
+  
+  profileHeaderInfo: { display: "flex", flexDirection: "column", gap: "8px" },
+  tagSpec: { color: "#D4AF37", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "2px" },
+  profileName: { fontSize: "36px", fontWeight: "normal", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", margin: "4px 0" },
+  emailRow: { display: "flex", alignItems: "center", gap: "8px", color: "#786C63", fontSize: "13px", marginBottom: "4px" },
+  ratingBadge: { display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", marginTop: "8px", backgroundColor: "#1A1715", padding: "6px 12px", borderRadius: "20px", width: "fit-content", border: "1px solid #2A2420" },
 
-  ratingRow: { display: "flex", alignItems: "center", gap: "12px", marginTop: "4px" },
-  ratingBadge: { display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "700", color: "#151312", backgroundColor: "#D4AF37", padding: "2px 6px", borderRadius: "4px" },
-
-  sectionCard: { backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", padding: "32px" },
-  sectionTitle: { display: "flex", alignItems: "center", gap: "8px", fontSize: "18px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", marginBottom: "16px", fontWeight: "normal" },
-  sectionText: { color: "#A89C92", fontSize: "14px", lineHeight: "1.7", fontWeight: "300", whiteSpace: "pre-wrap" },
+  contentFlow: { display: "flex", flexDirection: "column", gap: "32px" },
+  sectionBlock: { display: "flex", flexDirection: "column", gap: "16px" },
+  sectionTitle: { display: "flex", alignItems: "center", gap: "12px", fontSize: "22px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontWeight: "normal" },
+  sectionText: { color: "#A89C92", fontSize: "15px", lineHeight: "1.8", fontWeight: "300", whiteSpace: "pre-wrap" },
+  divider: { border: "none", borderTop: "1px solid #2A2420", margin: "0" },
 
   reviewsList: { display: "flex", flexDirection: "column", gap: "16px" },
-  reviewItem: { borderBottom: "1px solid #2A2420", paddingBottom: "16px" },
-  reviewMeta: { display: "flex", justifyContent: "space-between", marginBottom: "6px" },
-  reviewUser: { color: "#EAE0C8", fontSize: "14px", fontWeight: "500" },
-  reviewStars: { display: "flex", alignItems: "center", gap: "4px", color: "#D4AF37", fontSize: "11px" },
-  reviewText: { color: "#786C63", fontSize: "13px", lineHeight: "1.5", fontStyle: "italic" },
+  reviewItem: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "12px", padding: "24px" },
+  reviewMeta: { display: "flex", justifyContent: "space-between", marginBottom: "12px" },
+  reviewUser: { color: "#EAE0C8", fontSize: "14px", fontWeight: "600" },
+  reviewStars: { display: "flex", alignItems: "center", gap: "4px", color: "#D4AF37", fontSize: "12px" },
+  reviewText: { color: "#A89C92", fontSize: "14px", lineHeight: "1.6", fontStyle: "italic", fontWeight: "300" },
 
+  // COLUNA DIREITA (Agendamento)
   colDireita: { position: "sticky", top: "24px" },
-  agendamentoCard: { backgroundColor: "#1A1715", border: "1px solid #3A322C", borderRadius: "12px", padding: "32px" },
-  agendarTitle: { color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontSize: "20px", marginBottom: "24px", fontWeight: "normal" },
+  agendamentoCard: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "16px", padding: "32px", boxShadow: "0 20px 40px rgba(0,0,0,0.4)" },
+  agendarTitle: { color: "#FDFBF7", fontFamily: "'Playfair Display', serif", fontSize: "24px", marginBottom: "8px", fontWeight: "normal" },
+  agendarSubtitle: { color: "#786C63", fontSize: "13px", marginBottom: "32px", lineHeight: "1.5" },
   
-  servicosGridSelect: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" },
-  servicoCardSelect: { backgroundColor: "#110F0E", border: "1px solid #2A2420", borderRadius: "8px", padding: "16px", cursor: "pointer", transition: "all 0.2s", textAlign: "center", display: "flex", flexDirection: "column", gap: "4px" },
-  servicoCardAtivo: { borderColor: "#D4AF37", backgroundColor: "rgba(212, 175, 55, 0.05)" },
-  sCardNome: { fontSize: "13px", fontWeight: "600", margin: 0, transition: "color 0.2s" },
-  sCardValor: { fontSize: "12px", margin: 0, transition: "color 0.2s" },
+  formGroup: { display: "flex", flexDirection: "column", gap: "16px" },
+  inputLabel: { display: "flex", alignItems: "center", gap: "8px", color: "#EAE0C8", fontSize: "14px", fontWeight: "600" },
+  
+  // NOVO LIST DESIGN PARA SERVIÇOS
+  servicosListVertical: { display: "flex", flexDirection: "column", gap: "12px" },
+  servicoRowSelect: { display: "flex", alignItems: "center", backgroundColor: "#110F0E", border: "1px solid #2A2420", borderRadius: "8px", padding: "16px 20px", cursor: "pointer", transition: "all 0.2s" },
+  servicoRowAtivo: { borderColor: "#D4AF37", backgroundColor: "rgba(212, 175, 55, 0.05)" },
+  radioFake: { width: "18px", height: "18px", borderRadius: "50%", border: "2px solid #786C63", marginRight: "16px", display: "flex", alignItems: "center", justifyContent: "center" },
+  radioFakeInner: { width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#D4AF37" },
+  sCardNome: { fontSize: "14px", fontWeight: "500", transition: "color 0.2s", flex: 1 },
+  sCardValor: { fontSize: "14px", fontWeight: "700", transition: "color 0.2s" },
 
-  agendamentoForm: { display: "flex", flexDirection: "column", gap: "24px" },
-  formGroup: { display: "flex", flexDirection: "column", gap: "12px" },
-  inputLabel: { display: "flex", alignItems: "center", color: "#A89C92", fontSize: "13px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" },
+  dividerSutil: { border: "none", borderTop: "1px dashed #2A2420", margin: "32px 0" },
+  agendamentoForm: { display: "flex", flexDirection: "column", gap: "32px" },
   
   loadingText: { color: "#D4AF37", fontSize: "13px", fontStyle: "italic" },
   erroText: { color: "#ef4444", fontSize: "13px", fontStyle: "italic" },
 
-  selectorGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" },
-  selectorGridHoras: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" },
-  selectorBtn: { padding: "10px 0", backgroundColor: "#110F0E", border: "1px solid #2A2420", borderRadius: "6px", color: "#A89C92", fontSize: "13px", cursor: "pointer", transition: "all 0.2s", fontFamily: "'Inter', sans-serif" },
-  selectorBtnAtivo: { backgroundColor: "transparent", borderColor: "#D4AF37", color: "#D4AF37", fontWeight: "700" },
+  // PILLS (Pílulas) para datas e horas
+  selectorGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: "10px" },
+  selectorGridHoras: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "10px" },
+  selectorBtn: { padding: "12px 0", backgroundColor: "#110F0E", border: "1px solid #2A2420", borderRadius: "30px", color: "#A89C92", fontSize: "13px", cursor: "pointer", transition: "all 0.2s", fontFamily: "'Inter', sans-serif" },
+  selectorBtnAtivo: { backgroundColor: "#D4AF37", borderColor: "#D4AF37", color: "#151312", fontWeight: "700" },
   
-  btnConfirmar: { width: "100%", padding: "18px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", transition: "opacity 0.2s", marginTop: "8px" },
-  btnConfirmarDesativado: { backgroundColor: "#2A2420", color: "#786C63", cursor: "not-allowed" },
-  garantiaBox: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#786C63", fontSize: "11px", marginTop: "20px" },
+  btnConfirmar: { width: "100%", padding: "18px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer", transition: "opacity 0.2s", marginTop: "16px" },
+  btnConfirmarDesativado: { backgroundColor: "#1A1715", color: "#786C63", cursor: "not-allowed", border: "1px solid #2A2420" },
+  garantiaBox: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#786C63", fontSize: "12px", marginTop: "24px" },
 
   successCard: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "64px 32px", backgroundColor: "#1A1715", border: "1px solid #2A2420", borderRadius: "12px", textAlign: "center", maxWidth: "500px", margin: "40px auto" },
   successIconWrapper: { width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "#D4AF37", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" },

@@ -12,7 +12,8 @@ import PainelTarologo from './pages/PainelTarologo';
 import Termos from './pages/Termos';
 import Privacidade from './pages/Privacidade';
 import Planos from './pages/Planos'; 
-import PainelAdmin from './pages/PainelAdmin'; // <--- IMPORTANDO A TELA DE ADMINISTRAÇÃO
+import PainelAdmin from './pages/PainelAdmin'; 
+import OEspaco from './pages/OEspaco'; // <--- IMPORTANDO A NOVA PÁGINA "O ESPAÇO"
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
+          <Route path="/o-espaco" element={<OEspaco />} /> {/* <--- ROTA ADICIONADA AQUI */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/termos" element={<Termos />} />
@@ -32,7 +34,7 @@ export default function App() {
           <Route path="/painel-tarologo" element={<PainelTarologo />} />
           
           {/* Rota Exclusiva de Administração */}
-          <Route path="/admin" element={<PainelAdmin />} /> {/* <--- ROTA ADICIONADA AQUI */}
+          <Route path="/admin" element={<PainelAdmin />} /> 
         </Routes>
       </BrowserRouter>
     </HelmetProvider>

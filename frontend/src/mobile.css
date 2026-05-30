@@ -41,7 +41,7 @@
   }
 
   /* ==========================================
-     4. HEADER FIXO (TOPO DA TELA)
+     4. HEADER FIXO (TOPO DA TELA) - APP NATIVO
   ============================================= */
   .header-dashboard {
     position: sticky !important;
@@ -49,30 +49,62 @@
     background-color: #110F0E !important;
     z-index: 100 !important;
     margin-bottom: 20px !important;
-    padding: 16px 20px !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 16px !important;
+    padding: 12px 20px !important;
+    
+    display: flex !important;
+    flex-wrap: wrap !important; 
+    align-items: center !important;
+    gap: 12px !important;
     border-bottom: 1px solid #2A2420 !important;
   }
+
+  /* Título e Menu vão para a esquerda (empurram o resto pra direita) */
+  .header-dashboard > div:first-child {
+    margin-right: auto !important; 
+    order: 0 !important;
+  }
+
+  /* "Desempacota" as ações para podermos quebrar a linha da busca */
   .header-actions {
-    display: flex !important;
-    flex-direction: column !important; /* Empilha os botões um em cima do outro */
-    align-items: stretch !important;
-    gap: 12px !important;
-    width: 100% !important;
+    display: contents !important; 
   }
-  .header-actions > button, 
-  .header-actions > div {
-    width: 100% !important;
-    justify-content: center !important;
+
+  /* O Sininho (Fica no topo à direita) */
+  .header-actions > button:not(.userProfileBtn) {
+    order: 1 !important;
+    padding: 6px !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
   }
+
+  /* A Foto do Perfil (Fica no topo à extrema direita) */
+  .userProfileBtn {
+    order: 2 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  /* Esconde o nome e a setinha do perfil, deixando só a bolinha */
+  .userProfileBtn span,
+  .userProfileBtn svg:last-child {
+    display: none !important;
+  }
+
+  /* A Barra de Busca (Vai para a linha de baixo, ocupando 100%) */
   .search-container {
-    width: 100% !important;
     order: 3 !important; 
-    margin-top: 8px !important;
+    width: 100% !important;
+    margin-top: 4px !important;
   }
   
+  .search-container input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   .menu-hamburger { display: block !important; cursor: pointer; }
   .breadcrumb-desktop { display: none !important; }
   .mobile-title { display: block !important; }
@@ -92,6 +124,9 @@
     background-color: #151312 !important;
     padding: 24px !important;
     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+    /* CORREÇÃO DO CORTE NO CELULAR AQUI: */
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
   }
   .sidebar-dashboard.aberto {
     left: 0 !important; 

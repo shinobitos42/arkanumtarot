@@ -23,47 +23,32 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
-  // FUNÇÃO MÁGICA: Faz a tela rolar suavemente até a seção dos Pilares
-  const scrollToEspaco = (e) => {
-    // Só previne o comportamento padrão se já estivermos na Home
+  // Se o usuário clicar em "Home" estando na Home, joga ele pro topo
+  const handleScrollToTop = () => {
     if (location.pathname === "/") {
-      e.preventDefault();
-      const secao = document.getElementById("espaco");
-      if (secao) {
-        secao.scrollIntoView({ behavior: "smooth" });
-        setMenuOpen(false); // Fecha o menu no celular após o clique
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   return (
     <>
-      {/* ── BARRA ── */}
       <nav className={`ark-nav${scrolled ? " ark-nav--scrolled" : ""}`} style={{ position: 'fixed', top: 0, width: '100%', zIndex: 9999 }}>
-        <Link to="/" className="ark-logo">
+        <Link to="/" className="ark-logo" onClick={handleScrollToTop}>
           <Moon size={22} color="#D4AF37" className="ark-logo__icon" />
           <span className="ark-logo__text">Arkanum</span>
         </Link>
 
         {/* Links centrais — só desktop */}
         <div className="ark-links">
-          {/* Clicar em "O Espaço" agora ativa a rolagem suave */}
-          <Link to="/#espaco" className="ark-link" onClick={scrollToEspaco}>
-            O Espaço
-          </Link>
-          
-          {/* Como a página pública de Tarólogos não existe, leva para o cadastro para ver os guias */}
-          <Link to="/register" className="ark-link">
-            Tarólogos
-          </Link>
+          {/* APONTA PARA A NOVA PÁGINA */}
+          <Link to="/o-espaco" className="ark-link">O Espaço</Link>
+          <Link to="/register" className="ark-link">Tarólogos</Link>
         </div>
 
-        {/* CTA — só desktop */}
         <Link to="/login" className="ark-cta ark-cta--desktop">
           Agendar Sessão
         </Link>
 
-        {/* Hamburguer — só mobile */}
         <button
           className="ark-hamburger"
           onClick={() => setMenuOpen(v => !v)}
@@ -76,19 +61,18 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* ── OVERLAY ── */}
       <div
         className={`ark-overlay${menuOpen ? " ark-overlay--open" : ""}`}
         onClick={() => setMenuOpen(false)}
         style={{ zIndex: 9998 }}
       />
 
-      {/* ── DRAWER ── */}
       <aside className={`ark-drawer${menuOpen ? " ark-drawer--open" : ""}`} style={{ zIndex: 10000 }}>
         <div className="ark-drawer__accent" />
 
         <nav className="ark-drawer__links">
-          <Link to="/#espaco" className="ark-drawer__link" onClick={scrollToEspaco}>
+          {/* APONTA PARA A NOVA PÁGINA (MOBILE) */}
+          <Link to="/o-espaco" className="ark-drawer__link">
             <span className="ark-drawer__dash" />
             O Espaço
           </Link>
