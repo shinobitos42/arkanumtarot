@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check, User, Sparkles, Mail } from "lucide-react";
+import { ChevronLeft, Star, Calendar, Clock, Award, MessageSquare, ShieldCheck, Check, User, Sparkles, Mail, CreditCard, X, Loader2 } from "lucide-react";
 import api from "../services/api";
 
 export default function PerfilTarologo({ tarologo, onVoltar }) {
@@ -14,6 +14,9 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
   const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
   const [carregandoAgenda, setCarregandoAgenda] = useState(true);
 
+  // NOVOS ESTADOS PARA O PAGAMENTO REAL
+  const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false);
+  const [processandoPagamento, setProcessandoPagamento] = useState(false);
   const [agendadoComSucesso, setAgendadoComSucesso] = useState(false);
 
   // DADOS DO GUIA 
@@ -68,10 +71,36 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
     }
   }, [dataSelecionada, agendaReal]);
 
-  const handleAgendar = (e) => {
+  const handleAgendarClick = (e) => {
     e.preventDefault();
     if (!servicoSelecionado || !dataSelecionada || !horaSelecionada) return;
-    setAgendadoComSucesso(true);
+    // Abre o Modal de Pagamento
+    setModalPagamentoAberto(true);
+  };
+
+  const confirmarReservaNoBanco = async () => {
+    setProcessandoPagamento(true);
+    try {
+      // Cria a sessão real no banco de dados do Django
+      await api.post('tiragens/sessoes/', {
+        tarologo_id: tarologo.user?.id || tarologo.id,
+        tipo: servicoSelecionado.nome,
+        valor_cobrado: servicoSelecionado.valor,
+        data_agendada: dataSelecionada,
+        hora_agendada: horaSelecionada,
+        status_sessao: 'agendada', 
+        pergunta_principal: "Sessão Agendada com Guia", 
+        contexto: "Agendamento realizado via Círculo do Tarólogo."
+      });
+
+      setModalPagamentoAberto(false);
+      setAgendadoComSucesso(true);
+    } catch (error) {
+      alert("Houve um erro ao processar sua reserva. Tente novamente.");
+      console.error(error);
+    } finally {
+      setProcessandoPagamento(false);
+    }
   };
 
   if (agendadoComSucesso) {
@@ -82,7 +111,7 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
         </div>
         <h2 style={styles.successTitle}>Tiragem Agendada!</h2>
         <p style={styles.successText}>
-          Sua <strong>{servicoSelecionado.nome}</strong> com <strong>{nomeGuia}</strong> foi reservada para o dia <strong>{dataSelecionada}</strong> às <strong>{horaSelecionada}</strong>.
+          Sua <strong>{servicoSelecionado.nome}</strong> com <strong>{nomeGuia}</strong> foi reservada com sucesso para o dia <strong>{dataSelecionada}</strong> às <strong>{horaSelecionada}</strong>.
         </p>
         <button onClick={onVoltar} style={styles.btnPrimary}>Voltar ao Espaço</button>
       </div>
@@ -130,7 +159,6 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
             </div>
           </div>
 
-          {/* Área de conteúdo fluida (sem caixotes pesados) */}
           <div style={styles.contentFlow}>
             <div style={styles.sectionBlock}>
               <h3 style={styles.sectionTitle}>
@@ -171,7 +199,6 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
                 <Sparkles size={16} color="#D4AF37" /> 1. Escolha a sua Tiragem
               </label>
               
-              {/* Lista Vertical Elegante */}
               <div style={styles.servicosListVertical}>
                 {cardapioTiragens.map((servico) => {
                   const isActive = servicoSelecionado?.id === servico.id;
@@ -194,7 +221,7 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
             
             <hr style={styles.dividerSutil} />
 
-            <form onSubmit={handleAgendar} style={styles.agendamentoForm}>
+            <form onSubmit={handleAgendarClick} style={styles.agendamentoForm}>
               <div style={styles.formGroup}>
                 <label style={styles.inputLabel}>
                   <Calendar size={16} color="#D4AF37" /> 2. Selecione o Dia
@@ -260,6 +287,47 @@ export default function PerfilTarologo({ tarologo, onVoltar }) {
         </div>
 
       </div>
+
+      {/* MODAL DE PAGAMENTO SOBREPOSTO */}
+      {modalPagamentoAberto && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalHeader}>
+              <h3 style={{color: '#FDFBF7', fontSize: '20px', margin: 0, fontFamily: "'Playfair Display', serif"}}>Resumo da Reserva</h3>
+              <button onClick={() => setModalPagamentoAberto(false)} style={styles.btnFecharModal}><X size={20} /></button>
+            </div>
+            
+            <div style={styles.modalBody}>
+              <div style={styles.resumoItem}>
+                <span style={styles.resumoLabel}>Guia Selecionado:</span>
+                <span style={styles.resumoValorText}>{nomeGuia}</span>
+              </div>
+              <div style={styles.resumoItem}>
+                <span style={styles.resumoLabel}>Serviço:</span>
+                <span style={styles.resumoValorText}>{servicoSelecionado?.nome}</span>
+              </div>
+              <div style={styles.resumoItem}>
+                <span style={styles.resumoLabel}>Data e Hora:</span>
+                <span style={styles.resumoValorText}>{dataSelecionada} às {horaSelecionada}</span>
+              </div>
+              
+              <hr style={{borderTop: '1px dashed #3A322C', borderBottom: 'none', margin: '20px 0'}} />
+              
+              <div style={{...styles.resumoItem, marginBottom: '24px'}}>
+                <span style={{color: '#EAE0C8', fontSize: '16px'}}>Total a pagar:</span>
+                <span style={{color: '#D4AF37', fontSize: '24px', fontWeight: '700'}}>R$ {servicoSelecionado?.valor}</span>
+              </div>
+
+              {/* Aqui no futuro você pode plugar o Mercado Pago Bricks */}
+              <button onClick={confirmarReservaNoBanco} disabled={processandoPagamento} style={styles.btnPagar}>
+                {processandoPagamento ? <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> : <CreditCard size={18} />}
+                {processandoPagamento ? "Processando..." : "Confirmar e Pagar Agora"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -335,5 +403,16 @@ const styles = {
   successIconWrapper: { width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "#D4AF37", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" },
   successTitle: { fontSize: "24px", color: "#FDFBF7", fontFamily: "'Playfair Display', serif", marginBottom: "12px", fontWeight: "normal" },
   successText: { color: "#A89C92", fontSize: "14px", lineHeight: "1.6", marginBottom: "28px" },
-  btnPrimary: { padding: "14px 28px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "4px", fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer" }
+  btnPrimary: { padding: "14px 28px", backgroundColor: "#D4AF37", color: "#151312", border: "none", borderRadius: "4px", fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", cursor: "pointer" },
+
+  // ESTILOS DO MODAL DE PAGAMENTO
+  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(17, 15, 14, 0.85)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
+  modalContent: { backgroundColor: "#151312", border: "1px solid #2A2420", borderRadius: "16px", width: "100%", maxWidth: "440px", boxShadow: "0 25px 50px rgba(0,0,0,0.5)", overflow: "hidden" },
+  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 32px", borderBottom: "1px solid #2A2420", backgroundColor: "#1A1715" },
+  btnFecharModal: { background: "none", border: "none", color: "#786C63", cursor: "pointer", display: "flex" },
+  modalBody: { padding: "32px" },
+  resumoItem: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" },
+  resumoLabel: { color: "#786C63", fontSize: "14px" },
+  resumoValorText: { color: "#FDFBF7", fontSize: "14px", fontWeight: "500" },
+  btnPagar: { width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", padding: "18px", backgroundColor: "#10b981", color: "#FDFBF7", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", transition: "all 0.2s" }
 };

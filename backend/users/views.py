@@ -8,13 +8,13 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
-from django.db.models import Avg, Sum  # <-- Adicionado o Sum aqui
+from django.db.models import Avg, Sum  
 from django.db import transaction
 from decimal import Decimal
 
 from rest_framework import generics, status
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser  # <-- Adicionado IsAdminUser aqui
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser  
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -411,3 +411,47 @@ class AprovarSaqueView(APIView):
             return Response({"message": "Saque marcado como pago com sucesso!"})
         except TransacaoFinanceira.DoesNotExist:
             return Response({"error": "Saque não encontrado ou já processado."}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ==========================================
+# VIEW PARA CONSULTAR A AGENDA DO GUIA (PÚBLICA)
+# ==========================================
+class TarologoHorariosView(APIView):
+    permission_classes = [AllowAny] # Qualquer consulente pode ver a agenda!
+
+    def get(self, request, pk):
+        try:
+            # Tenta encontrar o perfil e a agenda do Tarólogo
+            perfil = TarologoProfile.objects.get(id=pk)
+            agenda = AgendaTarologo.objects.get(tarologo=perfil)
+        except (TarologoProfile.DoesNotExist, AgendaTarologo.DoesNotExist):
+            return Response({}) # Retorna vazio se ele não configurou a agenda ainda
+
+        # Puxa os turnos de trabalho e as folgas cadastradas
+        turnos = TurnoTrabalho.objects.filter(agenda=agenda)
+        folgas = Folga.objects.filter(agenda=agenda).values_list('data', flat=True)
+
+        horarios_disponiveis = {}
+        hoje = now().date()
+
+        # Gera os horários dos próximos 7 dias automaticamente
+        for i in range(1, 8):
+            dia_atual = hoje + timedelta(days=i)
+            
+            # Pula o dia se o tarólogo tiver marcado folga
+            if dia_atual in folgas:
+                continue
+
+            # Busca se ele trabalha neste dia da semana (0 = Segunda, 6 = Domingo)
+            turnos_do_dia = turnos.filter(dia_semana=dia_atual.weekday())
+            
+            if turnos_do_dia.exists():
+                lista_horas = []
+                for turno in turnos_do_dia:
+                    # Formata a hora para o React (Ex: "09:00")
+                    lista_horas.append(turno.hora_inicio.strftime('%H:%M'))
+                    
+                data_str = dia_atual.strftime('%d/%m/%Y')
+                horarios_disponiveis[data_str] = lista_horas
+
+        return Response(horarios_disponiveis)

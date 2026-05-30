@@ -50,34 +50,49 @@ export default function PainelTarologo() {
     const buscarDadosFixos = async () => {
       try {
         const resPerfil = await api.get('users/me/');
-        if (resPerfil.data.nome_plano_atual) setNomePlano(resPerfil.data.nome_plano_atual);
+        const dados = resPerfil.data; // Atalho para os dados recebidos
+        
+        if (dados.nome_plano_atual) setNomePlano(dados.nome_plano_atual);
 
-        if (resPerfil.data.email) {
-          setEmailUsuario(resPerfil.data.email);
-          localStorage.setItem('user_email', resPerfil.data.email);
+        // O Django envia o email dentro do objeto 'user' para o TarologoProfileSerializer
+        const emailReal = dados.email || dados.user?.email;
+        if (emailReal) {
+          setEmailUsuario(emailReal);
+          localStorage.setItem('user_email', emailReal);
         }
 
+        // CORREÇÃO AQUI: Os dados agora chegam diretamente na raiz (dados.especialidade)
         setPerfil({
-          especialidade: resPerfil.data.tarologo_profile?.especialidade || "",
-          biografia: resPerfil.data.tarologo_profile?.biografia || ""
+          especialidade: dados.especialidade || "",
+          biografia: dados.biografia || ""
         });
         
-        if (resPerfil.data.tarologo_profile?.tipos_tiragem && resPerfil.data.tarologo_profile.tipos_tiragem.length > 0) {
-            setTiposTiragem(resPerfil.data.tarologo_profile.tipos_tiragem);
+        // CORREÇÃO AQUI: Buscar tipos_tiragem direto da raiz
+        if (dados.tipos_tiragem && dados.tipos_tiragem.length > 0) {
+            setTiposTiragem(dados.tipos_tiragem);
         } else {
             setTiposTiragem([{ id: 1, nome: "Tiragem Objetiva", valor: "35.00" }]);
         }
 
-        if (resPerfil.data.foto_perfil) {
-          setFotoPreview(resPerfil.data.foto_perfil);
-          localStorage.setItem('user_foto', resPerfil.data.foto_perfil);
+        // Se o Django devolve a foto na raiz ou dentro de user
+        const fotoReal = dados.foto_perfil || dados.user?.foto_perfil;
+        if (fotoReal) {
+          setFotoPreview(fotoReal);
+          localStorage.setItem('user_foto', fotoReal);
         }
 
-        const saldoFormatado = resPerfil.data.tarologo_profile?.saldo_disponivel 
-          ? parseFloat(resPerfil.data.tarologo_profile.saldo_disponivel).toFixed(2).replace('.', ',') 
+        // CORREÇÃO AQUI: Os saldos e notas estão na raiz agora
+        const saldoFormatado = dados.saldo_disponivel 
+          ? parseFloat(dados.saldo_disponivel).toFixed(2).replace('.', ',') 
           : "0,00";
 
-        setEstatisticas({ saldo: saldoFormatado, tiragens: resPerfil.data.total_tiragens || 0, consulentes: resPerfil.data.total_clientes || 0, nota: resPerfil.data.tarologo_profile?.nota_media || "5.0" });
+        setEstatisticas({ 
+          saldo: saldoFormatado, 
+          tiragens: dados.total_tiragens || 0, 
+          consulentes: dados.total_clientes || 0, 
+          nota: dados.nota_media || "5.0" 
+        });
+        
         setLoading(false);
       } catch (error) {
         console.error("Erro ao carregar dados do perfil:", error);
@@ -136,6 +151,13 @@ export default function PainelTarologo() {
 
   const handleAtualizarVitrine = async (e) => {
     e.preventDefault();
+    
+    // VALIDAÇÃO DE SEGURANÇA NO FRONTEND
+    if (!perfil.especialidade.trim()) {
+      alert("A sua Especialidade Principal é obrigatória para salvar a vitrine!");
+      return;
+    }
+
     setSalvando(true);
 
     const formData = new FormData();
@@ -150,7 +172,12 @@ export default function PainelTarologo() {
       });
       if (response.data.foto_perfil) localStorage.setItem('user_foto', response.data.foto_perfil);
       alert("Vitrine e Cardápio de Tiragens atualizados com sucesso!");
-    } catch (error) { alert("Erro ao atualizar o perfil."); } finally { setSalvando(false); }
+    } catch (error) { 
+      // O motivo exato já vai piscar vermelho no console graças ao nosso interceptor!
+      alert("Erro ao atualizar o perfil. Verifique se todos os campos estão preenchidos."); 
+    } finally { 
+      setSalvando(false); 
+    }
   };
 
   const handleLogout = () => { localStorage.clear(); navigate('/login'); };
@@ -222,7 +249,6 @@ export default function PainelTarologo() {
             <div className="header-actions" style={styles.headerActions}>
               <button style={styles.iconBtn}><Bell size={20} color="#EAE0C8" /></button>
               
-              {/* CLASSE ADICIONADA AQUI: className="userProfileBtn" */}
               <button onClick={() => mudarAba("Meu Perfil")} className="userProfileBtn" style={styles.userProfileBtn}>
                 <div style={styles.userAvatar}>{iniciais}</div>
                 <span style={styles.userName}>{nomeUsuario}</span>

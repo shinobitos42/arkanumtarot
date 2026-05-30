@@ -4,7 +4,8 @@ from .views import (
     RegisterView, TarologoListView, CustomTokenObtainPairView, 
     UserMeView, AgendaUpdateView, ExtratoView, SolicitarSaqueView,
     ProcessarPagamentoBrickView, MercadoPagoWebhookView,
-    AdminDashboardView, AprovarSaqueView # <--- IMPORTAÇÕES DO ADMIN ADICIONADAS
+    AdminDashboardView, AprovarSaqueView,
+    TarologoHorariosView # <--- IMPORTAÇÃO DA AGENDA ADICIONADA AQUI
 )
 
 urlpatterns = [
@@ -13,8 +14,9 @@ urlpatterns = [
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
-    # Rota pública para listar os tarólogos (usada pelo Consulente)
+    # Rotas públicas de Tarólogos (usadas pelo Consulente na Vitrine)
     path('tarologos/', TarologoListView.as_view(), name='tarologos_list'),
+    path('tarologos/<int:pk>/horarios/', TarologoHorariosView.as_view(), name='tarologo-horarios'), # <--- ROTA NOVA ADICIONADA AQUI
     
     # Rotas privadas (Perfil)
     path('me/', UserMeView.as_view(), name='user_me'),
